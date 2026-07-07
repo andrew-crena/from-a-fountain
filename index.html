@@ -82,6 +82,7 @@
   .faf-ripples { position: absolute; inset: 0; display: grid; place-items: center; }
   .faf-ripples i {
     position: absolute;
+    top: 58%;                 /* sit at the pool, not the droplet */
     width: 30px; height: 30px;
     border-radius: 50%;
     border: 1.5px solid var(--patina);
@@ -94,17 +95,58 @@
     0%   { transform: scale(1);  opacity: .55; border-width: 1.5px; }
     100% { transform: scale(15); opacity: 0;   border-width: .5px; }
   }
+  /* droplet + pool — reads as water even when still */
   .faf-drop {
     position: relative;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--patina);
-    box-shadow: 0 0 0 4px rgba(62,107,94,.16);
     z-index: 1;
-    transition: background .4s, box-shadow .4s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
   }
-  .faf-water.live .faf-drop { background: var(--patina-2); box-shadow: 0 0 14px 3px rgba(90,139,124,.5); }
-  .faf-water.dry  .faf-drop { background: var(--ink-2); box-shadow: 0 0 0 4px rgba(92,82,65,.12); }
+  .faf-droplet {
+    position: relative;
+    width: 18px; height: 22px;
+    /* teardrop: round bottom, pointed top */
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+    transform: rotate(45deg);
+    background: radial-gradient(circle at 32% 32%,
+                var(--patina-2) 0%, var(--patina) 55%, #2f5449 100%);
+    box-shadow: inset 0 0 4px rgba(255,255,255,.35),
+                0 3px 6px rgba(33,27,18,.22);
+    transition: filter .4s ease, transform .4s ease;
+  }
+  .faf-droplet::after {
+    /* specular highlight */
+    content: '';
+    position: absolute;
+    top: 22%; left: 24%;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.75);
+    transform: rotate(-45deg);
+  }
+  .faf-pool {
+    width: 34px; height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 40%,
+                rgba(62,107,94,.5), rgba(62,107,94,.12) 70%, transparent);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .faf-water.live .faf-droplet {
+    filter: drop-shadow(0 0 8px rgba(90,139,124,.6));
+    animation: faf-bob 2.6s ease-in-out infinite;
+  }
+  .faf-water.live .faf-pool { transform: scaleX(1.15); opacity: 1; }
+  .faf-water.dry  .faf-droplet {
+    background: radial-gradient(circle at 32% 32%, #6a6151 0%, #4a4335 55%, #3a3428 100%);
+    filter: none;
+  }
+  .faf-water.dry  .faf-pool { opacity: .5; }
+  @keyframes faf-bob {
+    0%,100% { transform: rotate(45deg) translateY(0); }
+    50%     { transform: rotate(45deg) translateY(-3px); }
+  }
 
   /* live badge over the water */
   .faf-badge {
@@ -293,6 +335,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .faf-water.live .faf-ripples i { animation: none; opacity: .3; }
+    .faf-water.live .faf-droplet { animation: none; }
     .faf-badge.live .dot { animation: none; }
     .faf-vinyl { animation: none !important; }
   }
@@ -305,7 +348,6 @@
   <header class="faf-mast">
     <div class="faf-eyebrow">Live Vinyl Broadcast</div>
     <h1 class="faf-title">From&nbsp;a&nbsp;Fountain</h1>
-    <p class="faf-sub">Records played into open air, and out to wherever you are.</p>
   </header>
 
   <div class="faf-water dry" aria-hidden="true">
@@ -313,7 +355,10 @@
       <span class="dot"></span><b class="faf-badge-text">Checking…</b>
     </div>
     <div class="faf-ripples"><i></i><i></i><i></i></div>
-    <div class="faf-drop"></div>
+    <div class="faf-drop">
+      <span class="faf-droplet"></span>
+      <span class="faf-pool"></span>
+    </div>
   </div>
 
   <div class="faf-actions">
