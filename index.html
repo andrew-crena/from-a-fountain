@@ -1,10 +1,635 @@
-<div class="faf-video-frame">
-  <iframe
-    src="https://player.twitch.tv/?channel=andrewcrena&parent=andrew-crena.github.io"
-    width="100%"
-    height="100%"
-    allowfullscreen
-    style="border:0; display:block;"
-    title="From a Fountain — live video">
-  </iframe>
+<!-- wp:html -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ======================================================================
+     FROM A FOUNTAIN — live vinyl broadcast
+     Jazz-kissa aesthetic: warm paper, dark ink, oxidized-copper patina.
+     The signature is the water surface: it ripples while live, stills when
+     the fountain is dry. Watch and Listen are mutually exclusive.
+     ====================================================================== */
+  .faf-scope {
+    /* palette */
+    --paper:   #ede4d1;
+    --paper-2: #e4d8bf;
+    --paper-hi:#f4ecda;
+    --edge:    #cdbd9c;
+    --ink:     #211b12;
+    --ink-2:   #5c5241;
+    --patina:  #3e6b5e;   /* oxidized fountain copper */
+    --patina-2:#5a8b7c;
+    --amber:   #c8862e;   /* lamp glow */
+    --red:     #b4462f;   /* live lamp */
+    --paper-shadow: rgba(33,27,18,.16);
+
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    --mono:  ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+    --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    box-sizing: border-box;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: clamp(18px, 4vw, 34px) max(14px, env(safe-area-inset-left))
+             48px max(14px, env(safe-area-inset-right));
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .faf-scope *, .faf-scope *::before, .faf-scope *::after { box-sizing: border-box; }
+
+  /* ---------- masthead ---------- */
+  .faf-mast {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .faf-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 14px;
+  }
+  .faf-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(38px, 12vw, 68px);
+    line-height: .96;
+    letter-spacing: -.01em;
+    color: var(--ink);
+  }
+  .faf-sub {
+    margin-top: 12px;
+    font-family: var(--serif);
+    font-size: clamp(13px, 3.4vw, 15px);
+    color: var(--ink-2);
+    font-style: italic;
+  }
+
+  /* ---------- the water surface (signature) ---------- */
+  .faf-water {
+    position: relative;
+    height: 128px;
+    margin: 4px 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .faf-ripples { position: absolute; inset: 0; display: grid; place-items: center; }
+  .faf-ripples i {
+    position: absolute;
+    top: 58%;                 /* sit at the pool, not the droplet */
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid var(--patina);
+    opacity: 0;
+  }
+  .faf-water.live .faf-ripples i { animation: faf-ripple 5.4s ease-out infinite; }
+  .faf-water.live .faf-ripples i:nth-child(2) { animation-delay: 1.8s; }
+  .faf-water.live .faf-ripples i:nth-child(3) { animation-delay: 3.6s; }
+  @keyframes faf-ripple {
+    0%   { transform: scale(1);  opacity: .55; border-width: 1.5px; }
+    100% { transform: scale(15); opacity: 0;   border-width: .5px; }
+  }
+  /* droplet + pool — reads as water even when still */
+  .faf-drop {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+  }
+  .faf-droplet {
+    position: relative;
+    width: 18px; height: 22px;
+    /* teardrop: round bottom, pointed top */
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+    transform: rotate(45deg);
+    background: radial-gradient(circle at 32% 32%,
+                var(--patina-2) 0%, var(--patina) 55%, #2f5449 100%);
+    box-shadow: inset 0 0 4px rgba(255,255,255,.35),
+                0 3px 6px rgba(33,27,18,.22);
+    transition: filter .4s ease, transform .4s ease;
+  }
+  .faf-droplet::after {
+    /* specular highlight */
+    content: '';
+    position: absolute;
+    top: 22%; left: 24%;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.75);
+    transform: rotate(-45deg);
+  }
+  .faf-pool {
+    width: 34px; height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 40%,
+                rgba(62,107,94,.5), rgba(62,107,94,.12) 70%, transparent);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .faf-water.live .faf-droplet {
+    filter: drop-shadow(0 0 8px rgba(90,139,124,.6));
+    animation: faf-bob 2.6s ease-in-out infinite;
+  }
+  .faf-water.live .faf-pool { transform: scaleX(1.15); opacity: 1; }
+  .faf-water.dry  .faf-droplet {
+    background: radial-gradient(circle at 32% 32%, #6a6151 0%, #4a4335 55%, #3a3428 100%);
+    filter: none;
+  }
+  .faf-water.dry  .faf-pool { opacity: .5; }
+  @keyframes faf-bob {
+    0%,100% { transform: rotate(45deg) translateY(0); }
+    50%     { transform: rotate(45deg) translateY(-3px); }
+  }
+
+  /* live badge over the water */
+  .faf-badge {
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: var(--paper-hi);
+    border: 1px solid var(--edge);
+    border-radius: 20px;
+    padding: 6px 13px;
+    z-index: 2;
+  }
+  .faf-badge b { font-weight: 700; letter-spacing: .18em; }
+  .faf-badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink-2); flex: none;
+  }
+  .faf-badge.live   { color: var(--ink); border-color: var(--red); }
+  .faf-badge.live   .dot { background: var(--red); box-shadow: 0 0 9px rgba(180,70,47,.9); animation: faf-pulse 2s ease-in-out infinite; }
+  .faf-badge.checking .dot { background: var(--amber); box-shadow: 0 0 8px rgba(200,134,46,.8); }
+  @keyframes faf-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+  /* ---------- controls ---------- */
+  .faf-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .faf-btn {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    max-height: 210px;
+    min-height: 128px;
+    background: linear-gradient(180deg, var(--paper-hi), var(--paper) 42%, var(--paper-2));
+    color: var(--ink);
+    border: 1px solid var(--edge);
+    border-radius: 18px;
+    box-shadow: 0 12px 26px var(--paper-shadow),
+                inset 0 1px 0 rgba(255,255,255,.65),
+                inset 0 -2px 0 rgba(33,27,18,.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: transform .14s ease, box-shadow .18s ease, background .25s ease;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .faf-btn:hover { box-shadow: 0 16px 32px var(--paper-shadow), inset 0 1px 0 rgba(255,255,255,.7); }
+  .faf-btn:active { transform: scale(.975); }
+  .faf-btn:focus-visible { outline: 3px solid var(--patina); outline-offset: 3px; }
+  .faf-btn .glyph {
+    width: 46px; height: 46px;
+    display: grid; place-items: center;
+    color: var(--patina);
+    transition: transform .2s ease, color .25s ease;
+  }
+  .faf-btn .glyph svg { width: 100%; height: 100%; }
+  .faf-btn .label {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 400;
+  }
+  .faf-btn .hint {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .faf-btn[aria-pressed="true"] {
+    background: linear-gradient(180deg, #23413a, #2c534a 60%, #24463d);
+    border-color: var(--patina);
+    color: var(--paper-hi);
+    box-shadow: 0 12px 26px rgba(33,27,18,.28), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .faf-btn[aria-pressed="true"] .glyph { color: var(--paper-hi); transform: scale(.92); }
+  .faf-btn[aria-pressed="true"] .hint  { color: rgba(244,236,218,.7); }
+  .faf-btn[disabled] { opacity: .5; cursor: not-allowed; }
+  .faf-btn[disabled]:active { transform: none; }
+
+  /* ---------- status line ---------- */
+  .faf-status {
+    min-height: 1.5em;
+    margin: 16px 2px 0;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: var(--ink-2);
+  }
+  .faf-status a { color: var(--patina); text-underline-offset: 2px; }
+
+  /* ---------- players ---------- */
+  .faf-stage {
+    margin-top: 18px;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: opacity .25s ease;
+  }
+  .faf-stage.hidden { display: none; }
+
+  .faf-video-frame {
+    background: #0c0b09;
+    border: 1px solid var(--edge);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .faf-video-frame iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    display: block;
+  }
+
+  .faf-audio-shell {
+    background: linear-gradient(180deg, var(--paper-hi), var(--paper-2));
+    border: 1px solid var(--edge);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  .faf-audio-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .faf-vinyl {
+    width: 44px; height: 44px; flex: none;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--paper-hi) 0 20%, transparent 21%),
+      repeating-radial-gradient(circle at 50% 50%, #241f16 0 2px, #322b1f 2px 4px);
+    border: 1px solid var(--edge);
+    box-shadow: inset 0 0 8px rgba(0,0,0,.5);
+    animation: faf-spin 4s linear infinite;
+    animation-play-state: paused;
+  }
+  .faf-audio-shell.playing .faf-vinyl { animation-play-state: running; }
+  @keyframes faf-spin { to { transform: rotate(360deg); } }
+  .faf-audio-meta { flex: 1; min-width: 0; }
+  .faf-audio-meta .t {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .faf-audio-meta .s {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-top: 2px;
+  }
+  .faf-audio { width: 100%; display: block; }
+
+  /* ---------- footer ---------- */
+  .faf-foot {
+    margin-top: 30px;
+    padding-top: 16px;
+    border-top: 1px solid var(--edge);
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    opacity: .8;
+  }
+
+  @media (max-width: 380px) {
+    .faf-actions { gap: 10px; }
+    .faf-btn .label { font-size: 19px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faf-water.live .faf-ripples i { animation: none; opacity: .3; }
+    .faf-water.live .faf-droplet { animation: none; }
+    .faf-badge.live .dot { animation: none; }
+    .faf-vinyl { animation: none !important; }
+  }
+</style>
+
+<div class="faf-scope"
+     data-channel="UCaOM2mNthp-3w-bGoTy8MAg"
+     data-audio-url="https://malika-unflaky-loan.ngrok-free.dev/stream.mp3">
+
+  <header class="faf-mast">
+    <div class="faf-eyebrow">Live Vinyl Broadcast</div>
+    <h1 class="faf-title">From&nbsp;a&nbsp;Fountain</h1>
+  </header>
+
+  <div class="faf-water dry" aria-hidden="true">
+    <div class="faf-badge checking">
+      <span class="dot"></span><b class="faf-badge-text">Checking…</b>
+    </div>
+    <div class="faf-ripples"><i></i><i></i><i></i></div>
+    <div class="faf-drop">
+      <span class="faf-droplet"></span>
+      <span class="faf-pool"></span>
+    </div>
+  </div>
+
+  <div class="faf-actions">
+    <button class="faf-btn faf-watch" type="button" aria-pressed="false" aria-label="Watch the live video">
+      <span class="glyph" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="5" width="14" height="14" rx="2.5"></rect>
+          <path d="M16.5 10.5l5-3v9l-5-3"></path>
+        </svg>
+      </span>
+      <span class="label">Watch</span>
+      <span class="hint">Video · sound</span>
+    </button>
+
+    <button class="faf-btn faf-listen" type="button" aria-pressed="false" aria-label="Listen to the live audio">
+      <span class="glyph" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9v6M8 6v12M12 3.5v17M16 7v10M20 10v4"></path>
+        </svg>
+      </span>
+      <span class="label">Listen</span>
+      <span class="hint">Audio only</span>
+    </button>
+  </div>
+
+  <div class="faf-status" role="status" aria-live="polite"></div>
+
+  <div class="faf-stage faf-video-stage hidden">
+    <div class="faf-video-frame"><div class="faf-video-mount"></div></div>
+  </div>
+
+  <div class="faf-stage faf-audio-stage hidden">
+    <div class="faf-audio-shell">
+      <div class="faf-audio-head">
+        <div class="faf-vinyl" aria-hidden="true"></div>
+        <div class="faf-audio-meta">
+          <div class="t">The turntable stream</div>
+          <div class="s faf-audio-state">Ready</div>
+        </div>
+      </div>
+      <audio class="faf-audio" controls preload="none"></audio>
+    </div>
+  </div>
+
+  <div class="faf-foot">A jazz kissa in the open · vinyl only</div>
 </div>
+
+<script>
+(() => {
+  'use strict';
+  const root = document.currentScript.closest('.faf-scope') ||
+               document.querySelector('.faf-scope');
+  if (!root || root.dataset.fafInit) return;
+  root.dataset.fafInit = '1';
+
+  const CHANNEL_ID = root.dataset.channel;
+  const AUDIO_URL  = root.dataset.audioUrl;
+
+  const $ = sel => root.querySelector(sel);
+  const watchBtn  = $('.faf-watch');
+  const listenBtn = $('.faf-listen');
+  const videoStage = $('.faf-video-stage');
+  const audioStage = $('.faf-audio-stage');
+  const videoMount = $('.faf-video-mount');
+  const audio      = $('.faf-audio');
+  const audioShell = $('.faf-audio-shell');
+  const audioState = $('.faf-audio-state');
+  const status  = $('.faf-status');
+  const water   = $('.faf-water');
+  const badge   = $('.faf-badge');
+  const badgeText = $('.faf-badge-text');
+
+  let mode = null;                 // null | 'watch' | 'listen'
+  let iframe = null;
+  let audioReconnect = null;
+  let audioAttempts = 0;
+  let manualStop = false;          // user paused, don't auto-reconnect
+
+  /* ---------------- status + water surface ---------------- */
+  function setStatus(html) { status.innerHTML = html || ''; }
+
+  function setSurface(state) {
+    // state: 'live' | 'dry' | 'checking'
+    water.classList.toggle('live', state === 'live');
+    water.classList.toggle('dry',  state === 'dry');
+    badge.classList.remove('live', 'checking');
+    if (state === 'live')      { badge.classList.add('live');     badgeText.textContent = 'On air'; }
+    else if (state === 'checking') { badge.classList.add('checking'); badgeText.textContent = 'Checking…'; }
+    else                       { badgeText.textContent = 'Off air'; }
+  }
+
+  /* ---------------- online detection ----------------
+     Audio: HEAD/GET the Icecast mount; if it responds, it's up. Icecast
+     often lacks permissive CORS, so we treat a network-level reachable
+     response OR an opaque no-cors fetch that doesn't throw as "up".
+     Video: we can't reliably read YouTube live state cross-origin, so the
+     video button stays available and reports honestly once you press it. */
+  let audioOnline = null;
+
+  async function probeAudio() {
+    // Try a real fetch first (works if CORS allows); fall back to no-cors,
+    // where a resolved promise still implies the host is reachable.
+    const url = AUDIO_URL + (AUDIO_URL.includes('?') ? '&' : '?') + '_=' + Date.now();
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4500);
+      await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(timer);
+      return true;   // reachable (opaque response resolves without throwing)
+    } catch (e) {
+      return false;  // network error / aborted / host down
+    }
+  }
+
+  async function refreshOnline() {
+    if (mode === null) setSurface('checking');
+    const up = await probeAudio();
+    audioOnline = up;
+    // Only override the surface when the user isn't actively in a session
+    // that already implies live (an active player is its own signal).
+    if (mode === 'listen' && !audio.paused) return;
+    if (mode === 'watch') return;
+    setSurface(up ? 'live' : 'dry');
+    if (mode === null) {
+      setStatus(up
+        ? 'The stream is live. Choose <b>Watch</b> or <b>Listen</b>.'
+        : 'The fountain is quiet right now — nothing is streaming. Check back at set time.');
+    }
+  }
+
+  /* ---------------- video ---------------- */
+  function buildVideo() {
+    if (iframe) return;
+    iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube.com/embed/live_stream?channel=' +
+                 encodeURIComponent(CHANNEL_ID) +
+                 '&autoplay=1&playsinline=1&rel=0';
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('title', 'From a Fountain — live video');
+    videoMount.appendChild(iframe);
+  }
+  function teardownVideo() {
+    if (!iframe) return;
+    iframe.src = 'about:blank';
+    iframe.remove();
+    iframe = null;
+    videoMount.innerHTML = '';
+  }
+
+  /* ---------------- audio with auto-reconnect ---------------- */
+  function freshAudioSrc() {
+    return AUDIO_URL + (AUDIO_URL.includes('?') ? '&' : '?') + '_=' + Date.now();
+  }
+  function startAudio() {
+    manualStop = false;
+    audio.src = freshAudioSrc();
+    audio.load();
+    audioState.textContent = 'Connecting…';
+    const p = audio.play();
+    if (p && p.catch) {
+      p.catch(() => {
+        // Autoplay blocked — the visible controls let them start it.
+        audioState.textContent = 'Press play to begin';
+        setStatus('Tap play on the audio bar to start listening.');
+      });
+    }
+  }
+  function stopAudio() {
+    manualStop = true;
+    clearTimeout(audioReconnect);
+    audioAttempts = 0;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    audioShell.classList.remove('playing');
+    audioState.textContent = 'Stopped';
+  }
+  function scheduleReconnect() {
+    if (manualStop || mode !== 'listen') return;
+    audioAttempts++;
+    const delay = Math.min(1000 * Math.pow(1.6, audioAttempts), 15000);
+    audioState.textContent = 'Reconnecting…';
+    setStatus('Lost the stream — reconnecting…');
+    clearTimeout(audioReconnect);
+    audioReconnect = setTimeout(() => {
+      if (manualStop || mode !== 'listen') return;
+      audio.src = freshAudioSrc();
+      audio.load();
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    }, delay);
+  }
+
+  audio.addEventListener('playing', () => {
+    audioAttempts = 0;
+    audioShell.classList.add('playing');
+    audioState.textContent = 'On air';
+    setSurface('live');
+    setStatus('');
+  });
+  audio.addEventListener('waiting', () => { audioState.textContent = 'Buffering…'; });
+  audio.addEventListener('pause', () => {
+    audioShell.classList.remove('playing');
+    if (!manualStop && mode === 'listen') audioState.textContent = 'Paused';
+  });
+  audio.addEventListener('stalled', scheduleReconnect);
+  audio.addEventListener('error', () => {
+    if (mode === 'listen' && !manualStop) scheduleReconnect();
+  });
+  audio.addEventListener('ended', scheduleReconnect);
+
+  /* ---------------- mode switching (mutually exclusive) ---------------- */
+  function reflectButtons() {
+    watchBtn.setAttribute('aria-pressed', mode === 'watch');
+    listenBtn.setAttribute('aria-pressed', mode === 'listen');
+    watchBtn.querySelector('.label').textContent  = mode === 'watch'  ? 'Hide' : 'Watch';
+    listenBtn.querySelector('.label').textContent = mode === 'listen' ? 'Stop' : 'Listen';
+  }
+
+  function goWatch() {
+    if (mode === 'watch') { stopAll(); return; }
+    stopAudio();
+    audioStage.classList.add('hidden');
+    mode = 'watch';
+    reflectButtons();
+    videoStage.classList.remove('hidden');
+    buildVideo();
+    setSurface('live');
+    setStatus('Now watching. If the player says the stream is offline, the set hasn’t started yet.');
+  }
+
+  function goListen() {
+    if (mode === 'listen') { stopAll(); return; }
+    teardownVideo();
+    videoStage.classList.add('hidden');
+    mode = 'listen';
+    reflectButtons();
+    audioStage.classList.remove('hidden');
+    startAudio();
+    setStatus('');
+  }
+
+  function stopAll() {
+    const wasListen = mode === 'listen';
+    mode = null;
+    teardownVideo();
+    stopAudio();
+    videoStage.classList.add('hidden');
+    audioStage.classList.add('hidden');
+    reflectButtons();
+    setStatus('');
+    refreshOnline();
+    if (wasListen) manualStop = false;
+  }
+
+  watchBtn.addEventListener('click', goWatch);
+  listenBtn.addEventListener('click', goListen);
+
+  // Pause background audio when the tab is hidden is NOT desired for a radio
+  // stream, so we intentionally keep it playing. But we do re-probe online
+  // state when the user returns.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && mode === null) refreshOnline();
+  });
+
+  /* ---------------- boot ---------------- */
+  setSurface('checking');
+  setStatus('Checking whether the fountain is running…');
+  refreshOnline();
+  setInterval(() => { if (mode === null) refreshOnline(); }, 30000);
+})();
+</script>
+<!-- /wp:html -->
