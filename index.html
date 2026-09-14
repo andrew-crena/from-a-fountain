@@ -1,7 +1,8 @@
 <!doctype html>
-<!-- FROM A FOUNTAIN — Design A: '72 chrome + woodgrain head unit.
-     One WordPress HTML block. Two things you edit: data-channel (YouTube)
-     and data-audio-url (Icecast mount). Fonts via @import, degrade to sans. -->
+<!-- FROM A FOUNTAIN — '72 chrome + woodgrain head unit
+     Edit data-channel for YouTube
+     Edit data-audio-url if your ngrok address changes -->
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -9,256 +10,1443 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
 
 .cr {
-  --wood-1:#6b4423; --wood-2:#8a5a2c; --wood-3:#4e3419;
-  --chrome-hi:#ffffff; --chrome:#b9bec4; --chrome-lo:#5f656d;
-  --glass:#2a1a06; --glass-hi:#e6a53a; --amber:#ffb43a; --cream:#ffe6b8;
-  --red:#e23b2f; --green:#57d06a; --ink:#140d05;
+  --wood-1:#6b4423;
+  --wood-2:#8a5a2c;
+  --wood-3:#4e3419;
+  --chrome-hi:#ffffff;
+  --chrome:#b9bec4;
+  --chrome-lo:#5f656d;
+  --glass:#2a1a06;
+  --glass-hi:#e6a53a;
+  --amber:#ffb43a;
+  --cream:#ffe6b8;
+  --red:#e23b2f;
+  --green:#57d06a;
+  --ink:#140d05;
 
   --font:'Oswald','Arial Narrow',system-ui,sans-serif;
-  box-sizing:border-box; max-width:600px; margin:0 auto;
-  padding:clamp(10px,3vw,20px) max(8px,env(safe-area-inset-left)) 40px max(8px,env(safe-area-inset-right));
-  font-family:var(--font); color:var(--cream);
+
+  box-sizing:border-box;
+  max-width:600px;
+  margin:0 auto;
+  padding:clamp(10px,3vw,20px)
+          max(8px,env(safe-area-inset-left))
+          40px
+          max(8px,env(safe-area-inset-right));
+
+  font-family:var(--font);
+  color:var(--cream);
   -webkit-tap-highlight-color:transparent;
 }
-.cr *,.cr *::before,.cr *::after{box-sizing:border-box;}
 
-/* the unit ---------------------------------------------------------------- */
-.cr-unit{
+.cr *,
+.cr *::before,
+.cr *::after {
+  box-sizing:border-box;
+}
+
+/* UNIT */
+
+.cr-unit {
   border-radius:14px;
   padding:12px;
+
   background:
-    repeating-linear-gradient(91deg, rgba(0,0,0,.14) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(90deg, rgba(255,225,175,.05) 0 1px, transparent 1px 10px),
-    linear-gradient(92deg,var(--wood-1),var(--wood-2) 22%,var(--wood-3) 46%,var(--wood-2) 70%,var(--wood-1));
-  box-shadow:0 20px 44px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,230,190,.25), inset 0 -3px 6px rgba(0,0,0,.4);
+    repeating-linear-gradient(
+      91deg,
+      rgba(0,0,0,.14) 0 2px,
+      transparent 2px 7px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,225,175,.05) 0 1px,
+      transparent 1px 10px
+    ),
+    linear-gradient(
+      92deg,
+      var(--wood-1),
+      var(--wood-2) 22%,
+      var(--wood-3) 46%,
+      var(--wood-2) 70%,
+      var(--wood-1)
+    );
+
+  box-shadow:
+    0 20px 44px rgba(0,0,0,.55),
+    inset 0 2px 0 rgba(255,230,190,.25),
+    inset 0 -3px 6px rgba(0,0,0,.4);
+
   border:1px solid #3a2712;
 }
-.cr-face{
+
+.cr-face {
   border-radius:9px;
   padding:14px 14px 16px;
-  background:linear-gradient(180deg,#141414,#1d1d1d 40%,#0e0e0e);
+
+  background:
+    linear-gradient(
+      180deg,
+      #141414,
+      #1d1d1d 40%,
+      #0e0e0e
+    );
+
   border:2px solid transparent;
-  border-image:linear-gradient(180deg,var(--chrome-hi),var(--chrome) 45%,var(--chrome-lo)) 1;
-  box-shadow:inset 0 0 0 2px #000, 0 6px 14px rgba(0,0,0,.5);
+
+  border-image:
+    linear-gradient(
+      180deg,
+      var(--chrome-hi),
+      var(--chrome) 45%,
+      var(--chrome-lo)
+    ) 1;
+
+  box-shadow:
+    inset 0 0 0 2px #000,
+    0 6px 14px rgba(0,0,0,.5);
 }
 
-/* brand + on-air ---------------------------------------------------------- */
-.cr-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
-.cr-badge{
-  font-weight:700; font-size:clamp(19px,5.4vw,26px); letter-spacing:.02em;
-  padding:5px 14px; border-radius:5px; color:#2a2a2a;
-  background:linear-gradient(180deg,#fff,#cfd3d8 46%,#8b9098 54%,#eef1f4);
-  box-shadow:inset 0 1px 0 #fff, inset 0 -2px 3px rgba(0,0,0,.4), 0 2px 3px rgba(0,0,0,.5);
-  text-shadow:0 1px 0 rgba(255,255,255,.6);
+
+/* TOP */
+
+.cr-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.cr-badge {
+  font-weight:700;
+  font-size:clamp(19px,5.4vw,26px);
+  letter-spacing:.02em;
+  padding:5px 14px;
+  border-radius:5px;
+  color:#2a2a2a;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fff,
+      #cfd3d8 46%,
+      #8b9098 54%,
+      #eef1f4
+    );
+
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -2px 3px rgba(0,0,0,.4),
+    0 2px 3px rgba(0,0,0,.5);
+
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.6);
+
   white-space:nowrap;
 }
-.cr-onair{ display:flex; align-items:center; gap:7px; font-weight:600; font-size:13px; letter-spacing:.18em; color:#6b6157; }
-.cr-onair .lamp{ width:11px;height:11px;border-radius:50%; background:#3a2016; box-shadow:inset 0 0 3px #000; }
-.cr-live .cr-onair{ color:var(--amber); }
-.cr-live .cr-onair .lamp{ background:var(--red); box-shadow:0 0 10px var(--red); }
-.cr-search .cr-onair .lamp{ background:var(--amber); box-shadow:0 0 8px var(--amber); animation:cr-blink 1s steps(1) infinite; }
-@keyframes cr-blink{50%{opacity:.25;}}
 
-/* dial glass -------------------------------------------------------------- */
-.cr-dial{ position:relative; border-radius:6px; padding:2px; background:linear-gradient(180deg,var(--chrome-lo),#2a2d31); }
-.cr-glass{
-  position:relative; height:86px; border-radius:4px; overflow:hidden;
+.cr-onair {
+  display:flex;
+  align-items:center;
+  gap:7px;
+
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:.18em;
+  color:#6b6157;
+}
+
+.cr-onair .lamp {
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:#3a2016;
+
+  box-shadow:
+    inset 0 0 3px #000;
+}
+
+.cr-live .cr-onair {
+  color:var(--amber);
+}
+
+.cr-live .cr-onair .lamp {
+  background:var(--red);
+  box-shadow:0 0 10px var(--red);
+}
+
+.cr-search .cr-onair .lamp {
+  background:var(--amber);
+  box-shadow:0 0 8px var(--amber);
+  animation:cr-blink 1s steps(1) infinite;
+}
+
+@keyframes cr-blink {
+  50% { opacity:.25; }
+}
+
+
+/* DIAL */
+
+.cr-dial {
+  position:relative;
+  border-radius:6px;
+  padding:2px;
+
   background:
-    radial-gradient(120% 150% at 50% 0%, rgba(255,180,58,.5), transparent 60%),
-    linear-gradient(180deg,#3a2408,#241505 70%,#160d03);
-  box-shadow:inset 0 0 18px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,200,120,.25);
+    linear-gradient(
+      180deg,
+      var(--chrome-lo),
+      #2a2d31
+    );
+}
+
+.cr-glass {
+  position:relative;
+  height:86px;
+  border-radius:4px;
+  overflow:hidden;
+
+  background:
+    radial-gradient(
+      120% 150% at 50% 0%,
+      rgba(255,180,58,.5),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      #3a2408,
+      #241505 70%,
+      #160d03
+    );
+
+  box-shadow:
+    inset 0 0 18px rgba(0,0,0,.75),
+    inset 0 1px 0 rgba(255,200,120,.25);
+
   transition:filter .5s ease;
 }
-.cr-dark .cr-glass{ filter:brightness(.42) saturate(.55); }
-.cr-scale{ position:absolute; inset:0; padding:10px 16px 0; }
-.cr-ticks{ display:flex; justify-content:space-between; align-items:flex-start; }
-.cr-ticks span{ font-size:15px; font-weight:500; color:var(--cream); text-shadow:0 0 6px rgba(255,180,58,.6); }
-.cr-ticks span::before{ content:''; display:block; width:1px; height:9px; margin:0 auto 3px; background:rgba(255,230,190,.7); }
-.cr-fm{ position:absolute; left:16px; bottom:9px; font-size:12px; letter-spacing:.24em; color:var(--amber); font-weight:600; }
-.cr-lamps{ position:absolute; right:14px; bottom:9px; display:flex; gap:12px; font-size:11px; letter-spacing:.16em; font-weight:600; }
-.cr-lamps span{ color:#5a4020; }
-.cr-live .cr-lamps .tuned{ color:var(--green); text-shadow:0 0 8px rgba(87,208,106,.7); }
-.cr-live .cr-lamps .stereo{ color:var(--amber); text-shadow:0 0 8px rgba(255,180,58,.6); }
-.cr-needle{
-  position:absolute; top:6px; bottom:22px; left:14%; width:2px;
-  background:linear-gradient(180deg,#ff7a5a,var(--red)); box-shadow:0 0 8px rgba(226,59,47,.9);
+
+.cr-dark .cr-glass {
+  filter:brightness(.42) saturate(.55);
+}
+
+.cr-scale {
+  position:absolute;
+  inset:0;
+  padding:10px 16px 0;
+}
+
+.cr-ticks {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+}
+
+.cr-ticks span {
+  font-size:15px;
+  font-weight:500;
+  color:var(--cream);
+
+  text-shadow:
+    0 0 6px rgba(255,180,58,.6);
+}
+
+.cr-ticks span::before {
+  content:'';
+  display:block;
+  width:1px;
+  height:9px;
+  margin:0 auto 3px;
+  background:rgba(255,230,190,.7);
+}
+
+.cr-fm {
+  position:absolute;
+  left:16px;
+  bottom:9px;
+
+  font-size:12px;
+  letter-spacing:.24em;
+  color:var(--amber);
+  font-weight:600;
+}
+
+.cr-lamps {
+  position:absolute;
+  right:14px;
+  bottom:9px;
+
+  display:flex;
+  gap:12px;
+
+  font-size:11px;
+  letter-spacing:.16em;
+  font-weight:600;
+}
+
+.cr-lamps span {
+  color:#5a4020;
+}
+
+.cr-live .cr-lamps .tuned {
+  color:var(--green);
+
+  text-shadow:
+    0 0 8px rgba(87,208,106,.7);
+}
+
+.cr-live .cr-lamps .stereo {
+  color:var(--amber);
+
+  text-shadow:
+    0 0 8px rgba(255,180,58,.6);
+}
+
+.cr-needle {
+  position:absolute;
+  top:6px;
+  bottom:22px;
+  left:14%;
+
+  width:2px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ff7a5a,
+      var(--red)
+    );
+
+  box-shadow:
+    0 0 8px rgba(226,59,47,.9);
+
   border-radius:2px;
 }
-.cr-search .cr-needle{ animation:cr-sweep 3.1s ease-in-out infinite; }
-.cr-live .cr-needle{ left:63%; transition:left .8s cubic-bezier(.3,1.4,.5,1); }
-.cr-dark .cr-needle{ left:15%; opacity:.35; }
-@keyframes cr-sweep{ 0%,100%{left:11%;} 50%{left:87%;} }
 
-/* controls: buttons are the hero, knobs flank -------------------------- */
-.cr-controls{ display:flex; align-items:center; gap:12px; margin-top:16px; }
-.cr-knob{
-  flex:none; width:52px; height:52px; border-radius:50%;
+.cr-search .cr-needle {
+  animation:cr-sweep 3.1s ease-in-out infinite;
+}
+
+.cr-live .cr-needle {
+  left:63%;
+  transition:left .8s cubic-bezier(.3,1.4,.5,1);
+}
+
+.cr-dark .cr-needle {
+  left:15%;
+  opacity:.35;
+}
+
+@keyframes cr-sweep {
+  0%,100% { left:11%; }
+  50% { left:87%; }
+}
+
+
+/* CONTROLS */
+
+.cr-controls {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:16px;
+}
+
+.cr-knob {
+  flex:none;
+  width:52px;
+  height:52px;
+  border-radius:50%;
+
   background:
-    radial-gradient(circle at 38% 30%, #fff 0 8%, transparent 9%),
-    conic-gradient(from 210deg, #eef1f4, #7b8188 25%, #d6dade 50%, #6b7178 75%, #eef1f4);
-  box-shadow:inset 0 0 0 3px #2b2e32, inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 5px rgba(0,0,0,.5);
+    radial-gradient(
+      circle at 38% 30%,
+      #fff 0 8%,
+      transparent 9%
+    ),
+    conic-gradient(
+      from 210deg,
+      #eef1f4,
+      #7b8188 25%,
+      #d6dade 50%,
+      #6b7178 75%,
+      #eef1f4
+    );
+
+  box-shadow:
+    inset 0 0 0 3px #2b2e32,
+    inset 0 -3px 6px rgba(0,0,0,.5),
+    0 3px 5px rgba(0,0,0,.5);
+
   position:relative;
 }
-.cr-knob::after{ content:''; position:absolute; top:6px; left:50%; width:3px; height:14px; background:#1c1e20; border-radius:2px; transform:translateX(-50%); }
-.cr-knob .cap{ position:absolute; bottom:-17px; left:50%; transform:translateX(-50%); font-size:10px; letter-spacing:.14em; color:#3a2712; font-weight:600; white-space:nowrap; }
-.cr-buttons{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.cr-btn{
-  appearance:none; cursor:pointer; font-family:var(--font); font-weight:700;
-  font-size:clamp(20px,5.6vw,26px); letter-spacing:.06em; color:#f4ede0;
-  padding:20px 8px; border-radius:8px; position:relative;
-  background:linear-gradient(180deg,#2c2c2c,#161616);
+
+.cr-knob::after {
+  content:'';
+  position:absolute;
+  top:6px;
+  left:50%;
+  width:3px;
+  height:14px;
+
+  background:#1c1e20;
+  border-radius:2px;
+
+  transform:translateX(-50%);
+}
+
+.cr-knob .cap {
+  position:absolute;
+  bottom:-17px;
+  left:50%;
+  transform:translateX(-50%);
+
+  font-size:10px;
+  letter-spacing:.14em;
+  color:#3a2712;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.cr-buttons {
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.cr-btn {
+  appearance:none;
+  cursor:pointer;
+
+  font-family:var(--font);
+  font-weight:700;
+  font-size:clamp(20px,5.6vw,26px);
+  letter-spacing:.06em;
+
+  color:#f4ede0;
+
+  padding:20px 8px;
+  border-radius:8px;
+  position:relative;
+
+  background:
+    linear-gradient(
+      180deg,
+      #2c2c2c,
+      #161616
+    );
+
   border:3px solid transparent;
-  border-image:linear-gradient(180deg,var(--chrome-hi),var(--chrome) 40%,var(--chrome-lo) 70%,#3a3d41) 1;
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.14), inset 0 -8px 14px rgba(0,0,0,.55), 0 4px 7px rgba(0,0,0,.5);
-  text-shadow:0 1px 2px rgba(0,0,0,.7);
+
+  border-image:
+    linear-gradient(
+      180deg,
+      var(--chrome-hi),
+      var(--chrome) 40%,
+      var(--chrome-lo) 70%,
+      #3a3d41
+    ) 1;
+
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.14),
+    inset 0 -8px 14px rgba(0,0,0,.55),
+    0 4px 7px rgba(0,0,0,.5);
+
+  text-shadow:
+    0 1px 2px rgba(0,0,0,.7);
+
   transition:transform .06s ease;
 }
-.cr-btn .sub{ display:block; font-weight:500; font-size:11px; letter-spacing:.2em; color:#8a8175; margin-top:3px; }
-.cr-btn:active{ transform:translateY(2px); box-shadow:inset 0 3px 10px rgba(0,0,0,.7); }
-.cr-btn:focus-visible{ outline:3px solid var(--amber); outline-offset:3px; }
-.cr-btn[aria-pressed="true"]{
-  background:linear-gradient(180deg,#5a3410,#3a1f06);
-  color:#fff; text-shadow:0 0 12px rgba(255,180,58,.9);
-  box-shadow:inset 0 0 20px rgba(255,150,40,.55), inset 0 2px 0 rgba(255,220,160,.3), 0 4px 7px rgba(0,0,0,.5);
-}
-.cr-btn[aria-pressed="true"] .sub{ color:var(--amber); }
 
-/* status ------------------------------------------------------------------ */
-.cr-status{ min-height:1.3em; margin:14px 4px 0; font-size:15px; font-weight:500; letter-spacing:.02em; color:#c9b48c; }
-.cr-status::before{ content:'▸ '; color:var(--amber); }
-.cr-status a{ color:var(--amber); }
-
-/* stages ------------------------------------------------------------------ */
-.cr-stage{ margin-top:14px; }
-.cr-stage.hidden{ display:none; }
-.cr-frame{ border-radius:8px; overflow:hidden; border:3px solid #2b2e32; box-shadow:0 6px 14px rgba(0,0,0,.5); background:#000; }
-.cr-frame iframe{ width:100%; aspect-ratio:16/9; border:0; display:block; }
-.cr-audio-wrap{
-  border-radius:8px; padding:12px; background:linear-gradient(180deg,#1d1d1d,#0e0e0e);
-  border:2px solid transparent; border-image:linear-gradient(180deg,var(--chrome),var(--chrome-lo)) 1;
+.cr-btn .sub {
+  display:block;
+  font-weight:500;
+  font-size:11px;
+  letter-spacing:.2em;
+  color:#8a8175;
+  margin-top:3px;
 }
-.cr-audio-wrap .hd{ display:flex; justify-content:space-between; font-size:13px; letter-spacing:.14em; color:#8a8175; font-weight:600; margin-bottom:9px; }
-.cr-audio-wrap .hd .st{ color:var(--amber); }
-.cr-audio-wrap audio{ width:100%; display:block; }
 
-@media (max-width:420px){
-  .cr-knob{ width:40px; height:40px; }
-  .cr-knob .cap{ display:none; }
-  .cr-btn{ padding:18px 6px; }
+.cr-btn:active {
+  transform:translateY(2px);
+
+  box-shadow:
+    inset 0 3px 10px rgba(0,0,0,.7);
 }
-@media (prefers-reduced-motion:reduce){
-  .cr-search .cr-needle{ animation:none; left:50%; }
-  .cr-search .cr-onair .lamp{ animation:none; }
+
+.cr-btn:focus-visible {
+  outline:3px solid var(--amber);
+  outline-offset:3px;
+}
+
+.cr-btn[aria-pressed="true"] {
+  background:
+    linear-gradient(
+      180deg,
+      #5a3410,
+      #3a1f06
+    );
+
+  color:#fff;
+
+  text-shadow:
+    0 0 12px rgba(255,180,58,.9);
+
+  box-shadow:
+    inset 0 0 20px rgba(255,150,40,.55),
+    inset 0 2px 0 rgba(255,220,160,.3),
+    0 4px 7px rgba(0,0,0,.5);
+}
+
+.cr-btn[aria-pressed="true"] .sub {
+  color:var(--amber);
+}
+
+
+/* STATUS */
+
+.cr-status {
+  min-height:1.3em;
+  margin:14px 4px 0;
+
+  font-size:15px;
+  font-weight:500;
+  letter-spacing:.02em;
+
+  color:#c9b48c;
+}
+
+.cr-status::before {
+  content:'▸ ';
+  color:var(--amber);
+}
+
+.cr-status a {
+  color:var(--amber);
+}
+
+
+/* STAGES */
+
+.cr-stage {
+  margin-top:14px;
+}
+
+.cr-stage.hidden {
+  display:none;
+}
+
+.cr-frame {
+  border-radius:8px;
+  overflow:hidden;
+  border:3px solid #2b2e32;
+
+  box-shadow:
+    0 6px 14px rgba(0,0,0,.5);
+
+  background:#000;
+}
+
+.cr-frame iframe {
+  width:100%;
+  aspect-ratio:16/9;
+  border:0;
+  display:block;
+}
+
+.cr-audio-wrap {
+  border-radius:8px;
+  padding:12px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #1d1d1d,
+      #0e0e0e
+    );
+
+  border:2px solid transparent;
+
+  border-image:
+    linear-gradient(
+      180deg,
+      var(--chrome),
+      var(--chrome-lo)
+    ) 1;
+}
+
+.cr-audio-wrap .hd {
+  display:flex;
+  justify-content:space-between;
+
+  font-size:13px;
+  letter-spacing:.14em;
+  color:#8a8175;
+  font-weight:600;
+
+  margin-bottom:9px;
+}
+
+.cr-audio-wrap .hd .st {
+  color:var(--amber);
+}
+
+.cr-audio-wrap audio {
+  width:100%;
+  display:block;
+}
+
+@media (max-width:420px) {
+  .cr-knob {
+    width:40px;
+    height:40px;
+  }
+
+  .cr-knob .cap {
+    display:none;
+  }
+
+  .cr-btn {
+    padding:18px 6px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .cr-search .cr-needle {
+    animation:none;
+    left:50%;
+  }
+
+  .cr-search .cr-onair .lamp {
+    animation:none;
+  }
 }
 </style>
 
-<div class="cr cr-dark" data-channel="UCaOM2mNthp-3w-bGoTy8MAg"
-     data-audio-url="https://malika-unflaky-loan.ngrok-free.dev/stream.ogg">
+
+<div
+  class="cr cr-dark"
+  data-channel="UCaOM2mNthp-3w-bGoTy8MAg"
+  data-audio-url="https://malika-unflaky-loan.ngrok-free.dev/stream.ogg"
+>
+
   <div class="cr-unit">
     <div class="cr-face">
+
       <div class="cr-top">
-        <div class="cr-badge">From&nbsp;a&nbsp;Fountain</div>
-        <div class="cr-onair"><span class="lamp"></span>ON&nbsp;AIR</div>
+
+        <div class="cr-badge">
+          From&nbsp;a&nbsp;Fountain
+        </div>
+
+        <div class="cr-onair">
+          <span class="lamp"></span>
+          ON&nbsp;AIR
+        </div>
+
       </div>
+
 
       <div class="cr-dial">
+
         <div class="cr-glass">
+
           <div class="cr-scale">
-            <div class="cr-ticks"><span>88</span><span>92</span><span>96</span><span>100</span><span>104</span><span>108</span></div>
+
+            <div class="cr-ticks">
+              <span>88</span>
+              <span>92</span>
+              <span>96</span>
+              <span>100</span>
+              <span>104</span>
+              <span>108</span>
+            </div>
+
           </div>
-          <div class="cr-fm">FM</div>
-          <div class="cr-lamps"><span class="tuned">TUNED</span><span class="stereo">STEREO</span></div>
+
+          <div class="cr-fm">
+            FM
+          </div>
+
+          <div class="cr-lamps">
+            <span class="tuned">TUNED</span>
+            <span class="stereo">STEREO</span>
+          </div>
+
           <div class="cr-needle"></div>
+
         </div>
+
       </div>
+
 
       <div class="cr-controls">
-        <div class="cr-knob" aria-hidden="true"><span class="cap">VOL</span></div>
-        <div class="cr-buttons">
-          <button class="cr-btn cr-watch" type="button" aria-pressed="false">WATCH<span class="sub">VIDEO</span></button>
-          <button class="cr-btn cr-listen" type="button" aria-pressed="false">LISTEN<span class="sub">AUDIO</span></button>
+
+        <div
+          class="cr-knob"
+          aria-hidden="true"
+        >
+          <span class="cap">VOL</span>
         </div>
-        <div class="cr-knob" aria-hidden="true"><span class="cap">TUNE</span></div>
+
+
+        <div class="cr-buttons">
+
+          <button
+            class="cr-btn cr-watch"
+            type="button"
+            aria-pressed="false"
+          >
+            WATCH
+            <span class="sub">VIDEO</span>
+          </button>
+
+
+          <button
+            class="cr-btn cr-listen"
+            type="button"
+            aria-pressed="false"
+          >
+            LISTEN
+            <span class="sub">LOSSLESS</span>
+          </button>
+
+        </div>
+
+
+        <div
+          class="cr-knob"
+          aria-hidden="true"
+        >
+          <span class="cap">TUNE</span>
+        </div>
+
       </div>
+
     </div>
   </div>
 
-  <div class="cr-status" role="status" aria-live="polite"></div>
 
-  <div class="cr-stage cr-video hidden"><div class="cr-frame"><div class="cr-video-mount"></div></div></div>
+  <div
+    class="cr-status"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <div class="cr-stage cr-video hidden">
+
+    <div class="cr-frame">
+      <div class="cr-video-mount"></div>
+    </div>
+
+  </div>
+
+
   <div class="cr-stage cr-audio hidden">
+
     <div class="cr-audio-wrap">
-      <div class="hd"><span>AUDIO / MP3</span><span class="st cr-audio-state">READY</span></div>
-      <audio class="cr-audio" controls preload="none"></audio>
+
+      <div class="hd">
+
+        <span>
+          AUDIO / FLAC 48 kHz
+        </span>
+
+        <span class="st cr-audio-state">
+          READY
+        </span>
+
+      </div>
+
+      <audio
+        class="cr-audio"
+        controls
+        preload="none"
+      ></audio>
+
     </div>
+
   </div>
+
 </div>
+
 
 <script>
 (() => {
+
   'use strict';
-  const root = document.currentScript.closest('.cr') || document.querySelector('.cr');
-  if (!root || root.dataset.init) return; root.dataset.init = '1';
-  const CH = root.dataset.channel, URL_ = root.dataset.audioUrl, $ = s => root.querySelector(s);
-  const watchBtn=$('.cr-watch'), listenBtn=$('.cr-listen');
-  const vStage=$('.cr-video'), aStage=$('.cr-audio'), vMount=$('.cr-video-mount');
-  const audio=$('.cr-audio'), aState=$('.cr-audio-state'), status=$('.cr-status');
-  let mode=null, iframe=null, recon=null, tries=0, manual=false;
 
-  function say(h){ status.innerHTML=h||''; }
-  function setState(s){ // 'live'|'search'|'dark'
-    root.classList.toggle('cr-live', s==='live');
-    root.classList.toggle('cr-search', s==='search');
-    root.classList.toggle('cr-dark', s==='dark');
-  }
-  async function probe(){
-    const u=URL_+(URL_.includes('?')?'&':'?')+'_='+Date.now();
-    try{ const c=new AbortController(); const t=setTimeout(()=>c.abort(),4500);
-      await fetch(u,{method:'GET',mode:'no-cors',cache:'no-store',signal:c.signal}); clearTimeout(t); return true;
-    }catch(e){ return false; }
-  }
-  async function refresh(){
-    if(mode===null) setState('search');
-    const up=await probe();
-    if(mode==='listen'&&!audio.paused) return; if(mode==='watch') return;
-    setState(up?'live':'dark');
-    if(mode===null) say(up?'Tuned in. Hit <b>WATCH</b> or <b>LISTEN</b>.':'Station\u2019s dark right now \u2014 next set posts at the source.');
-  }
-  function buildVideo(){ if(iframe) return;
-    iframe=document.createElement('iframe');
-    iframe.src='https://www.youtube.com/embed/live_stream?channel='+encodeURIComponent(CH)+'&autoplay=1&playsinline=1&rel=0';
-    iframe.allow='autoplay; encrypted-media; picture-in-picture'; iframe.setAttribute('allowfullscreen','');
-    iframe.setAttribute('title','From a Fountain video'); vMount.appendChild(iframe);
-  }
-  function teardownVideo(){ if(!iframe) return; iframe.src='about:blank'; iframe.remove(); iframe=null; vMount.innerHTML=''; }
-  function fresh(){ return URL_+(URL_.includes('?')?'&':'?')+'_='+Date.now(); }
-  function startAudio(){ manual=false; audio.src=fresh(); audio.load(); aState.textContent='CONNECTING';
-    const p=audio.play(); if(p&&p.catch) p.catch(()=>{ aState.textContent='PRESS PLAY'; say('Tap play on the audio bar to start.'); }); }
-  function stopAudio(){ manual=true; clearTimeout(recon); tries=0; audio.pause(); audio.removeAttribute('src'); audio.load(); aState.textContent='STOPPED'; }
-  function reconn(){ if(manual||mode!=='listen') return; tries++;
-    const d=Math.min(1000*Math.pow(1.6,tries),15000); aState.textContent='RETUNING'; say('Signal dropped \u2014 retuning\u2026');
-    clearTimeout(recon); recon=setTimeout(()=>{ if(manual||mode!=='listen') return; audio.src=fresh(); audio.load(); const p=audio.play(); if(p&&p.catch)p.catch(()=>{}); }, d); }
-  audio.addEventListener('playing',()=>{ tries=0; aState.textContent='ON AIR'; setState('live'); say(''); });
-  audio.addEventListener('waiting',()=>{ aState.textContent='BUFFERING'; });
-  audio.addEventListener('pause',()=>{ if(!manual&&mode==='listen') aState.textContent='PAUSED'; });
-  audio.addEventListener('stalled',reconn);
-  audio.addEventListener('error',()=>{ if(mode==='listen'&&!manual) reconn(); });
-  audio.addEventListener('ended',reconn);
+  const root =
+    document.currentScript.closest('.cr') ||
+    document.querySelector('.cr');
 
-  function reflect(){ watchBtn.setAttribute('aria-pressed',mode==='watch'); listenBtn.setAttribute('aria-pressed',mode==='listen');
-    watchBtn.firstChild.textContent = mode==='watch'?'CLOSE':'WATCH';
-    listenBtn.firstChild.textContent = mode==='listen'?'STOP':'LISTEN'; }
-  function goWatch(){ if(mode==='watch'){stopAll();return;} stopAudio(); aStage.classList.add('hidden');
-    mode='watch'; reflect(); vStage.classList.remove('hidden'); buildVideo(); setState('live');
-    say('Video on. If the player says offline, the set hasn\u2019t started yet.'); }
-  function goListen(){ if(mode==='listen'){stopAll();return;} teardownVideo(); vStage.classList.add('hidden');
-    mode='listen'; reflect(); aStage.classList.remove('hidden'); startAudio(); say(''); }
-  function stopAll(){ const wl=mode==='listen'; mode=null; teardownVideo(); stopAudio();
-    vStage.classList.add('hidden'); aStage.classList.add('hidden'); reflect(); say(''); refresh(); if(wl) manual=false; }
-  watchBtn.addEventListener('click',goWatch); listenBtn.addEventListener('click',goListen);
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&mode===null) refresh(); });
+  if (!root || root.dataset.init) return;
 
-  setState('search'); say('Tuning\u2026'); refresh();
-  setInterval(()=>{ if(mode===null) refresh(); }, 30000);
+  root.dataset.init = '1';
+
+
+  const CH = root.dataset.channel;
+  const URL_ = root.dataset.audioUrl;
+
+  const $ = s => root.querySelector(s);
+
+
+  const watchBtn = $('.cr-watch');
+  const listenBtn = $('.cr-listen');
+
+  const vStage = $('.cr-video');
+  const aStage = $('.cr-audio');
+
+  const vMount = $('.cr-video-mount');
+
+  const audio = $('.cr-audio');
+
+  const aState = $('.cr-audio-state');
+  const status = $('.cr-status');
+
+
+  let mode = null;
+
+  let iframe = null;
+
+  let recon = null;
+
+  let tries = 0;
+
+  let manual = false;
+
+
+  function say(h) {
+
+    status.innerHTML = h || '';
+
+  }
+
+
+  function setState(s) {
+
+    root.classList.toggle(
+      'cr-live',
+      s === 'live'
+    );
+
+    root.classList.toggle(
+      'cr-search',
+      s === 'search'
+    );
+
+    root.classList.toggle(
+      'cr-dark',
+      s === 'dark'
+    );
+
+  }
+
+
+  function fresh() {
+
+    return URL_ +
+      (URL_.includes('?') ? '&' : '?') +
+      '_=' +
+      Date.now();
+
+  }
+
+
+  async function probe() {
+
+    const u = fresh();
+
+    try {
+
+      const c =
+        new AbortController();
+
+      const t =
+        setTimeout(
+          () => c.abort(),
+          4500
+        );
+
+      await fetch(
+        u,
+        {
+          method:'GET',
+          mode:'no-cors',
+          cache:'no-store',
+          signal:c.signal
+        }
+      );
+
+      clearTimeout(t);
+
+      return true;
+
+    } catch(e) {
+
+      return false;
+
+    }
+
+  }
+
+
+  async function refresh() {
+
+    if (mode === null) {
+      setState('search');
+    }
+
+
+    const up =
+      await probe();
+
+
+    if (
+      mode === 'listen' &&
+      !audio.paused
+    ) {
+      return;
+    }
+
+
+    if (
+      mode === 'watch'
+    ) {
+      return;
+    }
+
+
+    setState(
+      up ? 'live' : 'dark'
+    );
+
+
+    if (mode === null) {
+
+      say(
+        up
+          ? 'Tuned in. Hit <b>WATCH</b> or <b>LISTEN</b>.'
+          : 'Station is dark right now.'
+      );
+
+    }
+
+  }
+
+
+  function buildVideo() {
+
+    if (iframe) return;
+
+
+    iframe =
+      document.createElement('iframe');
+
+
+    iframe.src =
+      'https://www.youtube.com/embed/live_stream?channel=' +
+      encodeURIComponent(CH) +
+      '&autoplay=1&playsinline=1&rel=0';
+
+
+    iframe.allow =
+      'autoplay; encrypted-media; picture-in-picture';
+
+
+    iframe.setAttribute(
+      'allowfullscreen',
+      ''
+    );
+
+
+    iframe.setAttribute(
+      'title',
+      'From a Fountain video'
+    );
+
+
+    vMount.appendChild(
+      iframe
+    );
+
+  }
+
+
+  function teardownVideo() {
+
+    if (!iframe) return;
+
+
+    iframe.src =
+      'about:blank';
+
+
+    iframe.remove();
+
+
+    iframe = null;
+
+
+    vMount.innerHTML =
+      '';
+
+  }
+
+
+  function startAudio() {
+
+    manual = false;
+
+    tries = 0;
+
+
+    audio.src =
+      fresh();
+
+
+    audio.load();
+
+
+    aState.textContent =
+      'CONNECTING';
+
+
+    const p =
+      audio.play();
+
+
+    if (
+      p &&
+      p.catch
+    ) {
+
+      p.catch(() => {
+
+        aState.textContent =
+          'PRESS PLAY';
+
+
+        say(
+          'Tap play on the audio bar to start.'
+        );
+
+      });
+
+    }
+
+  }
+
+
+  function stopAudio() {
+
+    manual = true;
+
+
+    clearTimeout(
+      recon
+    );
+
+
+    tries = 0;
+
+
+    audio.pause();
+
+
+    audio.removeAttribute(
+      'src'
+    );
+
+
+    audio.load();
+
+
+    aState.textContent =
+      'STOPPED';
+
+  }
+
+
+  function reconn() {
+
+    if (
+      manual ||
+      mode !== 'listen'
+    ) {
+      return;
+    }
+
+
+    tries++;
+
+
+    const d =
+      Math.min(
+        1000 *
+        Math.pow(
+          1.6,
+          tries
+        ),
+        15000
+      );
+
+
+    aState.textContent =
+      'RETUNING';
+
+
+    say(
+      'Signal dropped — retuning…'
+    );
+
+
+    clearTimeout(
+      recon
+    );
+
+
+    recon =
+      setTimeout(
+        () => {
+
+          if (
+            manual ||
+            mode !== 'listen'
+          ) {
+            return;
+          }
+
+
+          audio.src =
+            fresh();
+
+
+          audio.load();
+
+
+          const p =
+            audio.play();
+
+
+          if (
+            p &&
+            p.catch
+          ) {
+
+            p.catch(
+              () => {}
+            );
+
+          }
+
+        },
+        d
+      );
+
+  }
+
+
+  audio.addEventListener(
+    'playing',
+    () => {
+
+      tries = 0;
+
+      aState.textContent =
+        'LOSSLESS';
+
+      setState(
+        'live'
+      );
+
+      say('');
+
+    }
+  );
+
+
+  audio.addEventListener(
+    'waiting',
+    () => {
+
+      aState.textContent =
+        'BUFFERING';
+
+    }
+  );
+
+
+  audio.addEventListener(
+    'pause',
+    () => {
+
+      if (
+        !manual &&
+        mode === 'listen'
+      ) {
+
+        aState.textContent =
+          'PAUSED';
+
+      }
+
+    }
+  );
+
+
+  audio.addEventListener(
+    'stalled',
+    reconn
+  );
+
+
+  audio.addEventListener(
+    'error',
+    () => {
+
+      if (
+        mode === 'listen' &&
+        !manual
+      ) {
+
+        reconn();
+
+      }
+
+    }
+  );
+
+
+  audio.addEventListener(
+    'ended',
+    reconn
+  );
+
+
+  function reflect() {
+
+    watchBtn.setAttribute(
+      'aria-pressed',
+      mode === 'watch'
+    );
+
+
+    listenBtn.setAttribute(
+      'aria-pressed',
+      mode === 'listen'
+    );
+
+
+    watchBtn.firstChild.textContent =
+      mode === 'watch'
+        ? 'CLOSE'
+        : 'WATCH';
+
+
+    listenBtn.firstChild.textContent =
+      mode === 'listen'
+        ? 'STOP'
+        : 'LISTEN';
+
+  }
+
+
+  function goWatch() {
+
+    if (
+      mode === 'watch'
+    ) {
+
+      stopAll();
+
+      return;
+
+    }
+
+
+    stopAudio();
+
+
+    aStage.classList.add(
+      'hidden'
+    );
+
+
+    mode =
+      'watch';
+
+
+    reflect();
+
+
+    vStage.classList.remove(
+      'hidden'
+    );
+
+
+    buildVideo();
+
+
+    setState(
+      'live'
+    );
+
+
+    say(
+      'Video on. If the player says offline, the set hasn’t started yet.'
+    );
+
+  }
+
+
+  function goListen() {
+
+    if (
+      mode === 'listen'
+    ) {
+
+      stopAll();
+
+      return;
+
+    }
+
+
+    teardownVideo();
+
+
+    vStage.classList.add(
+      'hidden'
+    );
+
+
+    mode =
+      'listen';
+
+
+    reflect();
+
+
+    aStage.classList.remove(
+      'hidden'
+    );
+
+
+    startAudio();
+
+
+    say('');
+
+  }
+
+
+  function stopAll() {
+
+    const wasListening =
+      mode === 'listen';
+
+
+    mode =
+      null;
+
+
+    teardownVideo();
+
+
+    stopAudio();
+
+
+    vStage.classList.add(
+      'hidden'
+    );
+
+
+    aStage.classList.add(
+      'hidden'
+    );
+
+
+    reflect();
+
+
+    say('');
+
+
+    refresh();
+
+
+    if (
+      wasListening
+    ) {
+
+      manual =
+        false;
+
+    }
+
+  }
+
+
+  watchBtn.addEventListener(
+    'click',
+    goWatch
+  );
+
+
+  listenBtn.addEventListener(
+    'click',
+    goListen
+  );
+
+
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+
+      if (
+        !document.hidden &&
+        mode === null
+      ) {
+
+        refresh();
+
+      }
+
+    }
+  );
+
+
+  setState(
+    'search'
+  );
+
+
+  say(
+    'Tuning…'
+  );
+
+
+  refresh();
+
+
+  setInterval(
+    () => {
+
+      if (
+        mode === null
+      ) {
+
+        refresh();
+
+      }
+
+    },
+    30000
+  );
+
 })();
 </script>
