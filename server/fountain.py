@@ -35,6 +35,7 @@ SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '400000'))  # ~10 s of 320 kbps MP3
 DOCENT_PIN = ENV('DOCENT_PIN', '')
 REQUIRE_APPROVAL = ENV('REQUIRE_APPROVAL', '1') != '0'
 DEMO = ENV('DEMO', '0') == '1'
+PAUSE = 1.1 if DISCOGS_TOKEN else 2.5  # Discogs allows 60 req/min with a token, 25 without
 UA = 'FromAFountain/1.0 +https://github.com/andrew-crena/from-a-fountain'
 
 DATA.mkdir(parents=True, exist_ok=True)
@@ -57,7 +58,8 @@ def norm(s):
 
 
 def clean_name(s):
-    return re.sub(r'\s*\(\d+\)$', '', s or '').strip()
+    s = (s or '').split(' = ')[0]                 # "Tatsuro Yamashita = 山下達郎"
+    return re.sub(r'\s*\(\d+\)', '', s).strip()   # "Jungle (12)", "John Williams (4), ..."
 
 
 # ---------- storage ----------
@@ -99,20 +101,65 @@ def collection():
     return json.loads(p.read_text()) if p.exists() else []
 
 
-def release(rid):
-    """Full release details (tracklist, credits, companies, images), cached on disk."""
+def cached_release(rid):
     p = DATA / 'releases' / f'{rid}.json'
-    if p.exists():
-        return json.loads(p.read_text())
-    if DEMO:
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+def basic_release(rid):
+    """What the collection list alone knows, for records whose details aren't cached yet."""
+    it = next((i for i in collection() if i['id'] == rid), None)
+    if not it:
         return None
+    return {'id': rid, 'title': it['title'], 'year': it.get('year'), 'artists': [{'name': it['artist']}],
+            'labels': [{'name': it['label']}] if it.get('label') else [], 'tracklist': [], 'basic': True}
+
+
+def release(rid):
+    """Full release details (tracklist, credits, companies, images), cached on disk.
+    Falls back to the collection's basic info when Discogs can't be reached."""
+    d = cached_release(rid)
+    if d or DEMO:
+        return d or basic_release(rid)
     try:
         d = discogs(f'/releases/{rid}')
     except Exception as e:
         log('discogs release', rid, 'failed:', e)
-        return None
-    p.write_text(json.dumps(d))
+        return basic_release(rid)
+    # Reissues often lack the original session's credits and studio, so also keep the
+    # original release's recording details (via its Discogs master).
+    try:
+        if d.get('master_id'):
+            time.sleep(PAUSE)
+            m = discogs(f"/masters/{d['master_id']}")
+            d['_original_year'] = m.get('year') or None
+            mr = m.get('main_release')
+            if mr and mr != rid:
+                time.sleep(PAUSE)
+                o = discogs(f'/releases/{mr}')
+                d['_original'] = {k: o.get(k) for k in ('id', 'extraartists', 'companies', 'notes', 'tracklist', 'released')}
+    except Exception as e:
+        log('discogs original for', rid, 'failed:', e)
+    (DATA / 'releases' / f'{rid}.json').write_text(json.dumps(d))
     return d
+
+
+def import_csv(path):
+    """Load a Discogs collection export (Collection → Export) as the crate."""
+    import csv
+    items, seen = [], set()
+    with open(path, newline='', encoding='utf-8-sig') as fh:
+        for r in csv.DictReader(fh):
+            rid = int(r['release_id'])
+            if rid in seen:
+                continue
+            seen.add(rid)
+            year = int(r['Released']) if (r.get('Released') or '0').isdigit() and int(r['Released']) else None
+            items.append({'id': rid, 'title': r['Title'].strip(), 'year': year, 'artist': clean_name(r['Artist']),
+                          'label': clean_name(r['Label'].split(',')[0]), 'format': r.get('Format'),
+                          'folder': r.get('CollectionFolder'), 'thumb': None})
+    (DATA / 'collection.json').write_text(json.dumps(items))
+    return items
 
 
 def sync_collection():
@@ -131,13 +178,13 @@ def sync_collection():
             if page >= d['pagination']['pages']:
                 break
             page += 1
-            time.sleep(1.1)
+            time.sleep(PAUSE * 3)
         (DATA / 'collection.json').write_text(json.dumps(items))
         log(f'collection: {len(items)} records')
         for it in items:
             if not (DATA / 'releases' / f"{it['id']}.json").exists():
                 release(it['id'])
-                time.sleep(1.1)
+                time.sleep(PAUSE * 3)
         log('collection details cached')
     except Exception as e:
         log('collection sync failed:', e)
@@ -147,45 +194,95 @@ def tracks_of(rel):
     return [t for t in rel.get('tracklist', []) if t.get('type_', 'track') == 'track']
 
 
-def card(rel, track_title, source):
-    """Now-playing card built from a Discogs release."""
+# Packaging and pressing jobs, not people you hear on the record
+SKIP_ROLES = re.compile(r'lacquer|master|design|photo|artwork|art direction|layout|liner notes|^notes|cover|'
+                        r'pressed|reissue|coordinat|management|legal|sleeve|typograph|illustrat|a&r|executive|'
+                        r'product manager|transfer|lettering|compiled|supervis|copyright|label|other', re.I)
+
+
+def credits_for(rel, track_title):
     t = next((t for t in tracks_of(rel) if norm(t['title']) == norm(track_title)), None)
-    credits, seen = [], set()
-    for ea in (t or {}).get('extraartists', []) + rel.get('extraartists', []):
+    out, seen = [], set()
+    for ea in (t or {}).get('extraartists', []) + (rel.get('extraartists') or []):
         on, pos = ea.get('tracks', ''), (t or {}).get('position')
         # Skip credits marked for other tracks only ("A1, B2"); keep ranges ("A1 to B3") to be safe
         if on and pos and ' to ' not in on and pos not in [x.strip() for x in on.split(',')]:
             continue
-        key = (clean_name(ea['name']), ea.get('role', ''))
+        role = re.sub(r'\s*\[.*?\]', '', ea.get('role', '')).strip()
+        if not role or SKIP_ROLES.search(role):
+            continue
+        key = (clean_name(ea['name']), role)
         if key not in seen:
             seen.add(key)
-            credits.append({'name': key[0], 'role': key[1]})
+            out.append({'name': key[0], 'role': role})
+    return out
+
+
+def recorded_where(rel):
+    places = [c['name'] for c in rel.get('companies') or [] if c.get('entity_type_name') == 'Recorded At']
+    if not places:  # often only written in the notes: "Recorded at Columbia 30th Street Studio, NYC, ..."
+        m = re.search(r'(recorded (?:live )?(?:at|in|on)\b[^\n]{3,160}?)(?:\.\s|\n|$)', rel.get('notes') or '', re.I)
+        if m:
+            places = [m.group(1).strip()]
+    return places
+
+
+MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split()
+
+
+def pretty_date(d):
+    """Discogs '1959-08-17' / '1958-01-00' / '1971' -> 'Aug 17, 1959' / 'Jan 1958' / '1971'."""
+    m = re.fullmatch(r'(\d{4})(?:-(\d\d))?(?:-(\d\d))?', d or '')
+    if not m:
+        return d or None
+    y, mo, day = m.groups()
+    if not mo or mo == '00':
+        return y
+    return f'{MONTHS[int(mo) - 1]} {int(day)}, {y}' if day and day != '00' else f'{MONTHS[int(mo) - 1]} {y}'
+
+
+def card(rel, track_title, source):
+    """Now-playing card built from a Discogs release (your pressing) plus its original's session details."""
+    t = next((t for t in tracks_of(rel) if norm(t['title']) == norm(track_title)), None)
+    orig = rel.get('_original') or {}
+    credits = credits_for(orig, track_title) if orig else []
+    if len(credits) < 2:
+        credits = credits_for(rel, track_title) or credits
     imgs = rel.get('images') or []
     cover = next((i['uri'] for i in imgs if i.get('type') == 'primary'), imgs[0]['uri'] if imgs else None)
+    year = rel.get('_original_year') or rel.get('year') or None
     return {
         'source': source, 'in_collection': True, 'release_id': rel['id'],
         'song': t['title'] if t else track_title, 'position': (t or {}).get('position'),
         'artist': ', '.join(clean_name(a['name']) for a in rel.get('artists', [])),
-        'album': rel.get('title'), 'year': rel.get('year') or None, 'released': rel.get('released'),
+        'album': rel.get('title'), 'year': year,
+        'released': pretty_date(orig.get('released') if rel.get('_original_year') else rel.get('released')),
+        'pressing_year': rel.get('year') if rel.get('year') and rel.get('year') != year else None,
         'label': ', '.join(dict.fromkeys(l['name'] for l in rel.get('labels', []))) or None,
-        'recorded_at': [c['name'] for c in rel.get('companies', []) if c.get('entity_type_name') == 'Recorded At'],
+        'recorded_at': recorded_where(orig) or recorded_where(rel),
         'credits': credits[:24], 'cover': cover, 'updated': time.time(),
     }
 
 
 def find_in_crate(artist, title, album=None):
     a = norm(artist)
-    best = None
+    best = by_album = None
     for it in collection():
         if norm(it['artist']) != a and a not in norm(it['artist']):
             continue
         rel = release(it['id'])
-        if not rel or not any(norm(t['title']) == norm(title) for t in tracks_of(rel)):
+        if not rel:
             continue
-        if album and norm(rel.get('title')) == norm(album):
+        same_album = album and norm(rel.get('title')) == norm(album)
+        if not any(norm(t['title']) == norm(title) for t in tracks_of(rel)):
+            # No tracklist yet (Discogs unreachable): still match on the album title
+            if same_album and rel.get('basic'):
+                by_album = by_album or rel
+            continue
+        if same_album:
             return rel
         best = best or rel
-    return best
+    return best or by_album
 
 
 # ---------- now playing ----------
@@ -305,7 +402,7 @@ def search(q):
         return []
     out = []
     for it in collection():
-        rel = release(it['id']) or {}
+        rel = cached_release(it['id']) or {}  # never wait on Discogs while someone types
         if q in norm(it['artist']) or q in norm(it['title']):
             out.append({'release_id': it['id'], 'artist': it['artist'], 'album': it['title'], 'year': it['year'],
                         'thumb': it.get('thumb'), 'tracks': [t['title'] for t in tracks_of(rel)]})
@@ -419,6 +516,10 @@ def seed_demo():
 
 
 if __name__ == '__main__':
+    import sys
+    if sys.argv[1:2] == ['import-csv'] and len(sys.argv) == 3:
+        print(f'imported {len(import_csv(sys.argv[2]))} records into {DATA / "collection.json"}')
+        sys.exit()
     if DEMO:
         seed_demo()
     if not DOCENT_PIN:

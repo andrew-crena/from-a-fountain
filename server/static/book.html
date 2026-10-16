@@ -102,8 +102,9 @@ function renderNow(n) {
     return;
   }
   const rows = [
-    n.recorded_at?.length && ['Recorded at', n.recorded_at.join('; ')],
-    (n.released || n.year) && ['Released', [n.released || n.year, n.label].filter(Boolean).join(' · ')],
+    n.recorded_at?.length && ['Recorded', n.recorded_at.join('; ')],
+    (n.released || n.year) && ['Released', String(n.released || n.year)],
+    (n.pressing_year || n.label) && ['This copy', [n.pressing_year && n.pressing_year + ' pressing', n.label].filter(Boolean).join(' · ')],
   ].filter(Boolean);
   const details = rows.length || n.credits?.length ? `<details><summary>About this recording</summary><dl>
       ${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}
@@ -112,7 +113,7 @@ function renderNow(n) {
   $('#np').innerHTML = `
     ${n.cover ? `<img class="cover" src="${esc(n.cover)}" alt="Cover of ${esc(n.album)}">` : `<div class="cover" role="img" aria-label="No cover">${esc(n.album || n.artist)}</div>`}
     <div><p class="live">● NOW SPINNING ON FROM A FOUNTAIN</p>
-      <p class="song">${esc(n.song)}</p>
+      <p class="song">${esc(n.song || n.album)}</p>
       <p class="by">${esc(n.artist)}${n.album ? ` · <span class="muted">${esc(n.album)}</span>` : ''}</p></div>
     ${details}`;
 }

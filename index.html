@@ -362,7 +362,7 @@ async function nowSpinning() {
     const n = await r.json();
     nowEl.hidden = !n.artist;
     if (n.artist) {
-      nowEl.querySelector('.t').textContent = `${n.song} — ${n.artist}`;
+      nowEl.querySelector('.t').textContent = `${n.song || n.album} — ${n.artist}`;
       nowEl.href = API + '/';
     }
   } catch {}

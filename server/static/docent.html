@@ -73,7 +73,7 @@ $('#pin').onkeydown = e => { if (e.key === 'Enter') $('#unlock').click(); };
 function showNow(n) {
   $('#now').innerHTML = n.artist ? `
     <span class="src">${n.source === 'manual' ? 'Set by you · recognition paused' : 'Recognized automatically'}</span>
-    <p><b>${esc(n.song)}</b></p><p class="muted">${esc(n.artist)} · ${esc(n.album)}</p>
+    <p><b>${esc(n.song || n.album)}</b></p><p class="muted">${esc(n.artist)} · ${esc(n.album)}</p>
     ${n.source === 'manual' ? '<button id="auto">Back to automatic</button>' : ''}` : '<p class="muted">Nothing set yet.</p>';
   const a = $('#auto'); if (a) a.onclick = async () => showNow(await call('/now', { mode: 'auto' }));
 }
@@ -86,12 +86,13 @@ async function search() {
   if (q.length < 2) { $('#results').innerHTML = ''; return; }
   const rs = await call('/search?q=' + encodeURIComponent(q)).catch(() => []);
   $('#results').innerHTML = rs.map((r, i) => `<div class="card"><p><b>${esc(r.album)}</b></p><p class="muted">${esc(r.artist)}${r.year ? ' · ' + r.year : ''}</p>
-    <div class="list">${r.tracks.map((s, j) => `<button class="trk" data-r="${i}" data-t="${j}">${esc(s)}</button>`).join('')}</div></div>`).join('')
+    <div class="list">${r.tracks.length ? r.tracks.map((s, j) => `<button class="trk" data-r="${i}" data-t="${j}">${esc(s)}</button>`).join('')
+      : `<button class="trk" data-r="${i}" data-t="-1">Set this record</button>`}</div></div>`).join('')
     || '<p class="muted">Not in the crate.</p>';
   $('#results').onclick = async e => {
     const b = e.target.closest('.trk'); if (!b) return;
     const r = rs[+b.dataset.r];
-    showNow(await call('/now', { release_id: r.release_id, song: r.tracks[+b.dataset.t] }));
+    showNow(await call('/now', { release_id: r.release_id, song: r.tracks[+b.dataset.t] || '' }));
     $('#q').value = ''; $('#results').innerHTML = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

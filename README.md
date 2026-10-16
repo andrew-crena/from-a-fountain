@@ -17,6 +17,16 @@ It then:
 - **Serves the letter book** at `/`: what's spinning, a prompt to write a memory about the song, album, or artist, and past letters, closest match first (same song → same album → same artist). People can also pick any record, playing or not.
 - **Serves the docent page** at `/docent` (needs the PIN): set the record by hand when recognition misses (this pauses recognition until you tap "Back to automatic") and approve letters before they show.
 
+### Loading your crate
+
+The service pulls your collection from Discogs on start. You can also load a Discogs export (Collection → Export → CSV), which makes search work right away, even offline:
+
+```bash
+python3 server/fountain.py import-csv andrewcrena-collection.csv
+```
+
+Tracklists, covers and credits are fetched per record in the background and cached. For a reissue, credits and "recorded at" come from the original release, so your 2010 *Kind of Blue* still shows Coltrane, Evans, and the 1959 session dates.
+
 Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the book.
 
 ### Settings
