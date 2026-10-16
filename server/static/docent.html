@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>From a Fountain · Docent</title>
+<script src="../fountain-config.js"></script>
 <style>
-:root{--bg:#f6f1e8;--card:#fff;--fg:#1f1a14;--muted:#6d6254;--line:#e2d8c8;--accent:#b8561c;--accent-fg:#fff;--bad:#a3302a}
-@media (prefers-color-scheme:dark){:root{--bg:#15110d;--card:#211a14;--fg:#f3e9da;--muted:#a8998a;--line:#382c21;--accent:#f09a4a;--accent-fg:#1a1009;--bad:#e5786f;color-scheme:dark}}
+:root{color-scheme:light;--bg:#ede4d1;--card:#f4ecda;--fg:#211b12;--muted:#5c5241;--line:#b4a78d;--accent:#3e6b5e;--accent-fg:#f4ecda;--bad:#8f2f24}
 *{box-sizing:border-box} [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.45 system-ui,sans-serif}
 .wrap{max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left));display:grid;gap:24px}
@@ -22,10 +22,12 @@ button.no{color:var(--bad)}
 .rec{text-align:left;font-weight:500}
 .trk{text-align:left;font-weight:400;padding:10px 12px}
 .src{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.back a{color:var(--accent);font-size:15px;text-underline-offset:3px}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="back"><a href="https://andrew-crena.github.io/">← From a Fountain</a></nav>
   <section id="lockS" class="list">
     <h2>Docent</h2>
     <input id="pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="Docent PIN">
@@ -51,7 +53,7 @@ button.no{color:var(--bad)}
 <script>
 (() => {
 'use strict';
-const API = '/api';
+const API = (window.FOUNTAIN_API || '').replace(/\/$/, '') + '/api';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let PIN = '';

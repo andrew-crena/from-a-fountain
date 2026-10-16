@@ -458,6 +458,8 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, ctype='text/html; charset=utf-8', raw=(HERE / 'static' / 'book.html').read_bytes())
         if u.path == '/docent':
             return self.send(200, ctype='text/html; charset=utf-8', raw=(HERE / 'static' / 'docent.html').read_bytes())
+        if u.path == '/fountain-config.js':  # the website's copy sets the service address; here it's same-origin
+            return self.send(200, ctype='text/javascript', raw=b'')
         if u.path == '/api/now':
             return self.send(200, now())
         if u.path == '/api/letters':

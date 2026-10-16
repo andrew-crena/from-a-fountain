@@ -45,6 +45,16 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 
 Try it without any keys: `DEMO=1 DOCENT_PIN=1234 python3 server/fountain.py`, then open http://localhost:8787 and http://localhost:8787/docent.
 
+### On the website
+
+`andrew-crena.github.io` hosts copies of the two pages at `/letters/` and `/docent/`, with buttons on the main menu. Its `fountain-config.js` holds the service's public address:
+
+```js
+window.FOUNTAIN_API = 'https://your-book-address';
+```
+
+When you change `server/static/book.html` or `docent.html`, copy them to `letters/index.html` and `docent/index.html` on the site.
+
 ### Hooking up the radio page
 
 The service needs its own public address (for example a second tunnel next to the Icecast one). Put it in `index.html`:
