@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>From a Fountain · Letter Book</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f6f1e8; --card:#fff; --fg:#1f1a14; --muted:#6d6254; --line:#e2d8c8; --accent:#b8561c; --accent-fg:#fff;
+  --display:'Oswald','Arial Narrow',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#15110d; --card:#211a14; --fg:#f3e9da; --muted:#a8998a; --line:#382c21; --accent:#f09a4a; --accent-fg:#1a1009; color-scheme:dark}}
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.45}
+.wrap{max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 56px max(16px,env(safe-area-inset-left));display:grid;gap:28px}
+h2{font:600 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+p{margin:0} .muted{color:var(--muted)} .small{font-size:14px}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.np{display:grid;gap:14px}
+.cover{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;background:var(--line);display:grid;place-items:center;
+  font:600 32px/1.05 var(--display);color:var(--muted);text-align:center;padding:24px}
+.live{font:600 13px var(--display);letter-spacing:.18em;color:var(--accent)}
+.song{font:600 30px/1.1 var(--display);text-wrap:balance}
+.by{font-size:18px}
+details{border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--muted)} details[open] summary::after{content:'–'}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:12px 0 0;font-size:15px}
+dt{color:var(--muted)} dd{margin:0}
+.credits{grid-column:1/-1;display:grid;gap:4px;margin-top:6px}
+.credits div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.credits span:last-child{color:var(--muted);text-align:right}
+.write{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px}
+.ask{font:600 24px/1.2 var(--display);text-wrap:balance}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{font:500 15px var(--body);padding:12px 4px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.seg button:disabled{opacity:.4;cursor:default}
+textarea,input{width:100%;font:17px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px}
+.big{width:100%;font:600 18px var(--body);padding:16px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+.big:disabled{opacity:.6}
+.link{background:none;border:0;padding:0;font:500 15px var(--body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.about .link{white-space:nowrap}
+.about{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:15px}
+.list{display:grid;gap:6px}
+.pick{text-align:left;font:15px var(--body);padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.msg{font-size:16px;font-weight:600;color:var(--accent)}
+.mem{display:grid;gap:16px}
+.letter{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px}
+.letter .txt{font-size:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.letter .meta{font-size:14px;color:var(--muted)}
+.match{font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="np" id="np" aria-label="Now playing"><p class="muted">Tuning in…</p></section>
+
+  <section class="write" aria-label="Write a memory">
+    <p class="ask" id="ask">What memory does this song bring back?</p>
+    <div class="seg" role="group" aria-label="What your memory is about">
+      <button type="button" data-k="song" aria-pressed="true">This song</button>
+      <button type="button" data-k="album" aria-pressed="false">This album</button>
+      <button type="button" data-k="artist" aria-pressed="false">This artist</button>
+    </div>
+    <div class="about"><span class="muted" id="aboutLine"></span><button class="link" id="change" type="button">Pick another</button></div>
+    <div class="list" id="picker" hidden>
+      <input type="search" id="q" placeholder="Search a song, album, or artist" aria-label="Search">
+      <div class="list" id="results"></div>
+    </div>
+    <textarea id="body" rows="5" maxlength="2000" placeholder="Where were you? Who were you with?" aria-label="Your memory"></textarea>
+    <input type="text" id="name" maxlength="60" placeholder="Your name (optional)" aria-label="Your name">
+    <button class="big" id="send" type="button">Leave it in the book</button>
+    <p class="msg" id="msg" role="status" hidden></p>
+  </section>
+
+  <section aria-label="Memories from others">
+    <h2 id="memHd">Others remember</h2>
+    <div class="mem" id="mem"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const API = (document.documentElement.dataset.api || '') + '/api';
+const H = { 'ngrok-skip-browser-warning': '1' };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const get = p => fetch(API + p, { headers: H, cache: 'no-store' }).then(r => r.json());
+
+let playing = null, about = null, kind = 'song', touched = false, lastKey = '';
+
+const label = a => a.song ? `“${a.song}” by ${a.artist}` : a.album ? `${a.album} by ${a.artist}` : a.artist;
+const scoped = (a, k) => ({ artist: a.artist, album: k === 'artist' ? '' : a.album || '', song: k === 'song' ? a.song || '' : '' });
+
+function renderNow(n) {
+  if (!n || n.source === 'none' || !n.artist) {
+    $('#np').innerHTML = '<p class="live">FROM A FOUNTAIN</p><p class="muted">Nothing on the turntable right now. You can still leave a memory about any record.</p>';
+    return;
+  }
+  const rows = [
+    n.recorded_at?.length && ['Recorded at', n.recorded_at.join('; ')],
+    (n.released || n.year) && ['Released', [n.released || n.year, n.label].filter(Boolean).join(' · ')],
+  ].filter(Boolean);
+  const details = rows.length || n.credits?.length ? `<details><summary>About this recording</summary><dl>
+      ${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}
+      ${n.credits?.length ? `<div class="credits">${n.credits.map(c => `<div><span>${esc(c.name)}</span><span>${esc(c.role)}</span></div>`).join('')}</div>` : ''}
+    </dl></details>` : '';
+  $('#np').innerHTML = `
+    ${n.cover ? `<img class="cover" src="${esc(n.cover)}" alt="Cover of ${esc(n.album)}">` : `<div class="cover" role="img" aria-label="No cover">${esc(n.album || n.artist)}</div>`}
+    <div><p class="live">● NOW SPINNING ON FROM A FOUNTAIN</p>
+      <p class="song">${esc(n.song)}</p>
+      <p class="by">${esc(n.artist)}${n.album ? ` · <span class="muted">${esc(n.album)}</span>` : ''}</p></div>
+    ${details}`;
+}
+
+function renderWrite() {
+  $('#ask').textContent = `What memory does ${kind === 'song' ? 'this song' : kind === 'album' ? 'this album' : 'this artist'} bring back?`;
+  $('#aboutLine').textContent = about ? 'About: ' + label(about) : 'Pick a song, album, or artist first.';
+  document.querySelectorAll('.seg button').forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.k === kind);
+    b.disabled = !about || (b.dataset.k === 'song' && !about.full?.song) || (b.dataset.k === 'album' && !about.full?.album);
+  });
+}
+
+async function renderMem() {
+  if (!about) { $('#mem').innerHTML = ''; $('#memHd').textContent = 'Others remember'; return; }
+  $('#memHd').textContent = `Others remember ${about.artist}`;
+  const qs = new URLSearchParams({ artist: about.artist, album: about.album, song: about.song });
+  let list = [];
+  try { list = await get('/letters?' + qs); } catch {}
+  const tag = { song: 'Same song', album: 'Same album', artist: 'Same artist' };
+  $('#mem').innerHTML = list.length ? list.map(l => `
+    <article class="letter"><span class="match">${tag[l.match]}</span>
+      <p class="txt">${esc(l.body)}</p>
+      <p class="meta">${esc(label(l))}${l.name ? ' · ' + esc(l.name) : ''}</p></article>`).join('')
+    : `<p class="muted">No memories of ${esc(about.artist)} yet. Yours would be the first.</p>`;
+}
+
+function setAbout(full, k) {
+  kind = k; about = { ...scoped(full, k), full };
+  renderWrite(); renderMem();
+}
+
+async function poll() {
+  let n;
+  try { n = await get('/now'); } catch { return; }
+  const key = [n.artist, n.song].join('|');
+  if (key === lastKey) return;
+  lastKey = key; playing = n; renderNow(n);
+  // Follow the turntable unless the visitor picked something else
+  if (!touched && n.artist) setAbout({ artist: n.artist, album: n.album, song: n.song }, n.song ? 'song' : 'album');
+  else if (!about) renderWrite();
+}
+
+document.querySelector('.seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled || !about) return;
+  setAbout(about.full, b.dataset.k);
+});
+$('#change').addEventListener('click', () => {
+  $('#picker').hidden = !$('#picker').hidden;
+  if (!$('#picker').hidden) $('#q').focus();
+});
+
+let t = null;
+$('#q').addEventListener('input', () => { clearTimeout(t); t = setTimeout(findRecords, 250); });
+async function findRecords() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { $('#results').innerHTML = ''; return; }
+  let rs = [];
+  try { rs = await get('/search?q=' + encodeURIComponent(q)); } catch {}
+  const opts = [];
+  rs.forEach(r => {
+    (r.hit || []).forEach(s => opts.push({ artist: r.artist, album: r.album, song: s }));
+    opts.push({ artist: r.artist, album: r.album, song: '' });
+  });
+  const seen = new Set(), uniq = opts.filter(o => { const k = label(o); return !seen.has(k) && seen.add(k); }).slice(0, 8);
+  uniq.push({ artist: q, album: '', song: '', free: true });
+  $('#results').innerHTML = uniq.map((o, i) => `<button class="pick" type="button" data-i="${i}">${
+    o.free ? `Write about the artist “${esc(q)}”` : esc(label(o))}</button>`).join('');
+  $('#results').onclick = e => {
+    const b = e.target.closest('.pick'); if (!b) return;
+    const o = uniq[+b.dataset.i];
+    touched = true; $('#picker').hidden = true; $('#q').value = ''; $('#results').innerHTML = '';
+    setAbout(o, o.song ? 'song' : o.album ? 'album' : 'artist');
+  };
+}
+
+$('#send').addEventListener('click', async () => {
+  const body = $('#body').value.trim();
+  const msg = $('#msg');
+  if (!about) { $('#change').click(); return; }
+  if (!body) { $('#body').focus(); return; }
+  $('#send').disabled = true;
+  try {
+    const r = await fetch(API + '/letters', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, artist: about.artist, album: about.album, song: about.song, body, name: $('#name').value.trim() }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Could not save it.');
+    $('#body').value = '';
+    msg.textContent = d.pending ? 'Thanks. It’s in the book and will show up once the docent reads it.' : 'Thanks. It’s in the book.';
+    renderMem();
+  } catch (e) {
+    msg.textContent = e.message === 'Failed to fetch' ? 'Couldn’t reach the book. Check your connection and try again.' : e.message;
+  }
+  msg.hidden = false; $('#send').disabled = false;
+});
+
+renderWrite();
+poll();
+setInterval(poll, 15000);
+})();
+</script>
+</body>
+</html>

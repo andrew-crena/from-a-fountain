@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>From a Fountain · Docent</title>
+<style>
+:root{--bg:#f6f1e8;--card:#fff;--fg:#1f1a14;--muted:#6d6254;--line:#e2d8c8;--accent:#b8561c;--accent-fg:#fff;--bad:#a3302a}
+@media (prefers-color-scheme:dark){:root{--bg:#15110d;--card:#211a14;--fg:#f3e9da;--muted:#a8998a;--line:#382c21;--accent:#f09a4a;--accent-fg:#1a1009;--bad:#e5786f;color-scheme:dark}}
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.45 system-ui,sans-serif}
+.wrap{max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left));display:grid;gap:24px}
+h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+p{margin:0} .muted{color:var(--muted)}
+input{width:100%;font:17px system-ui;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px}
+button{font:600 16px system-ui;border-radius:8px;padding:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.no{color:var(--bad)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px}
+.list{display:grid;gap:8px}
+.row{display:flex;gap:8px} .row>*{flex:1}
+.rec{text-align:left;font-weight:500}
+.trk{text-align:left;font-weight:400;padding:10px 12px}
+.src{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="lockS" class="list">
+    <h2>Docent</h2>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="Docent PIN">
+    <button class="primary" id="unlock">Unlock</button>
+    <p class="muted" id="lockMsg"></p>
+  </section>
+
+  <div id="main" class="list" hidden style="gap:24px">
+    <section><h2>Now spinning</h2><div class="card" id="now"></div></section>
+
+    <section class="list">
+      <h2>Set the record</h2>
+      <input id="q" type="search" placeholder="Search your crate" aria-label="Search your crate">
+      <div class="list" id="results"></div>
+    </section>
+
+    <section class="list">
+      <h2 id="pendHd">Letters waiting</h2>
+      <div class="list" id="pending"></div>
+    </section>
+  </div>
+</div>
+<script>
+(() => {
+'use strict';
+const API = '/api';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let PIN = '';
+try { PIN = sessionStorage.getItem('pin') || ''; } catch {}
+const call = (p, body) => fetch(API + p, {
+  method: body ? 'POST' : 'GET',
+  headers: { 'X-Docent-Pin': PIN, 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+  body: body ? JSON.stringify(body) : undefined }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; });
+
+async function unlock() {
+  try { await call('/pending'); } catch (e) { $('#lockMsg').textContent = e.message || 'Wrong PIN.'; return; }
+  try { sessionStorage.setItem('pin', PIN); } catch {}
+  $('#lockS').hidden = true; $('#main').hidden = false;
+  loadNow(); loadPending(); setInterval(loadNow, 15000); setInterval(loadPending, 30000);
+}
+$('#unlock').onclick = () => { PIN = $('#pin').value.trim(); unlock(); };
+$('#pin').onkeydown = e => { if (e.key === 'Enter') $('#unlock').click(); };
+
+function showNow(n) {
+  $('#now').innerHTML = n.artist ? `
+    <span class="src">${n.source === 'manual' ? 'Set by you · recognition paused' : 'Recognized automatically'}</span>
+    <p><b>${esc(n.song)}</b></p><p class="muted">${esc(n.artist)} · ${esc(n.album)}</p>
+    ${n.source === 'manual' ? '<button id="auto">Back to automatic</button>' : ''}` : '<p class="muted">Nothing set yet.</p>';
+  const a = $('#auto'); if (a) a.onclick = async () => showNow(await call('/now', { mode: 'auto' }));
+}
+const loadNow = () => fetch(API + '/now', { headers: { 'ngrok-skip-browser-warning': '1' } }).then(r => r.json()).then(showNow).catch(() => {});
+
+let t;
+$('#q').oninput = () => { clearTimeout(t); t = setTimeout(search, 250); };
+async function search() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { $('#results').innerHTML = ''; return; }
+  const rs = await call('/search?q=' + encodeURIComponent(q)).catch(() => []);
+  $('#results').innerHTML = rs.map((r, i) => `<div class="card"><p><b>${esc(r.album)}</b></p><p class="muted">${esc(r.artist)}${r.year ? ' · ' + r.year : ''}</p>
+    <div class="list">${r.tracks.map((s, j) => `<button class="trk" data-r="${i}" data-t="${j}">${esc(s)}</button>`).join('')}</div></div>`).join('')
+    || '<p class="muted">Not in the crate.</p>';
+  $('#results').onclick = async e => {
+    const b = e.target.closest('.trk'); if (!b) return;
+    const r = rs[+b.dataset.r];
+    showNow(await call('/now', { release_id: r.release_id, song: r.tracks[+b.dataset.t] }));
+    $('#q').value = ''; $('#results').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+}
+
+async function loadPending() {
+  const ls = await call('/pending').catch(() => []);
+  $('#pendHd').textContent = `Letters waiting (${ls.length})`;
+  $('#pending').innerHTML = ls.map(l => `<div class="card"><p style="white-space:pre-wrap">${esc(l.body)}</p>
+    <p class="muted">${esc(l.song || l.album || l.artist)} · ${esc(l.artist)}${l.name ? ' · ' + esc(l.name) : ''}</p>
+    <div class="row"><button class="primary" data-id="${l.id}" data-a="approve">Show it</button><button class="no" data-id="${l.id}" data-a="reject">Hide it</button></div></div>`).join('')
+    || '<p class="muted">Nothing waiting.</p>';
+}
+$('#pending').onclick = async e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  await call(`/letters/${b.dataset.id}/${b.dataset.a}`, {}).catch(() => {});
+  loadPending();
+};
+
+if (PIN) unlock();
+})();
+</script>
+</body>
+</html>
