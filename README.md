@@ -4,7 +4,7 @@ Live vinyl stream page (`index.html`), plus a small service that shows what's sp
 
 ## The letter book service (`server/`)
 
-One Python file, standard library only (Python 3.9+). Run it on the computer next to Icecast.
+One Python file, standard library only (Python 3.9+). Run it on the computer next to Icecast. **New Windows computer? Follow [SETUP-WINDOWS.md](SETUP-WINDOWS.md).**
 
 ```bash
 DISCOGS_TOKEN=...  AUDD_TOKEN=...  DOCENT_PIN=...  python3 server/fountain.py
@@ -36,7 +36,8 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 | `DISCOGS_TOKEN` | | Discogs personal access token (Settings → Developers) |
 | `DISCOGS_USER` | `andrew-crena` | |
 | `AUDD_TOKEN` | | AudD API token. Without it, recognition is off and you set records by hand |
-| `STREAM_URL` | the ngrok `stream.mp3` mount | What recognition listens to |
+| `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
+| `STREAM_URL` | `ICECAST_URL` + `/stream.mp3` | What recognition listens to |
 | `RECOGNIZE_EVERY` | `60` | Seconds between checks (each check is one AudD request) |
 | `DOCENT_PIN` | | Required for `/docent` |
 | `REQUIRE_APPROVAL` | `1` | `0` shows letters right away |
@@ -55,9 +56,13 @@ window.FOUNTAIN_API = 'https://your-book-address';
 
 When you change `server/static/book.html` or `docent.html`, copy them to `letters/index.html` and `docent/index.html` on the site.
 
+### One public address
+
+The service passes Icecast's `/stream.mp3`, `/stream.ogg` and `/status-json.xsl` through, so point ngrok at the service (port 8787) and the same address serves the stream and the letter book. `ICECAST_URL` (default `http://localhost:8000`) says where Icecast is.
+
 ### Hooking up the radio page
 
-The service needs its own public address (for example a second tunnel next to the Icecast one). Put it in `index.html`:
+Put the service's address in `index.html`:
 
 ```html
 data-api-url="https://your-book-address"

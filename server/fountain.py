@@ -18,7 +18,7 @@ API:     GET  /api/now                    what's spinning
 DEMO=1 runs with a small sample crate and no outside services.
 """
 import hmac, json, os, re, sqlite3, threading, time, unicodedata, uuid
-import urllib.parse, urllib.request
+import urllib.error, urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -29,7 +29,10 @@ DATA = Path(ENV('FOUNTAIN_DATA', HERE / 'data'))
 DISCOGS_USER = ENV('DISCOGS_USER', 'andrew-crena')
 DISCOGS_TOKEN = ENV('DISCOGS_TOKEN', '')
 AUDD_TOKEN = ENV('AUDD_TOKEN', '')
-STREAM_URL = ENV('STREAM_URL', 'https://malika-unflaky-loan.ngrok-free.dev/stream.mp3')
+ICECAST_URL = ENV('ICECAST_URL', 'http://localhost:8000').rstrip('/')
+STREAM_URL = ENV('STREAM_URL', ICECAST_URL + '/stream.mp3')
+# Icecast paths passed through, so one tunnel (ngrok -> this service) serves the stream and the letter book
+ICECAST_PATHS = re.compile(r'/(stream\.(mp3|ogg)|status-json\.xsl)')
 RECOGNIZE_EVERY = int(ENV('RECOGNIZE_EVERY', '60'))
 SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '400000'))  # ~10 s of 320 kbps MP3
 DOCENT_PIN = ENV('DOCENT_PIN', '')
@@ -451,8 +454,31 @@ class H(BaseHTTPRequestHandler):
         except ValueError:
             return None
 
+    def relay_icecast(self, path):
+        try:
+            up = urllib.request.urlopen(urllib.request.Request(ICECAST_URL + path, headers={'User-Agent': UA}), timeout=15)
+        except urllib.error.HTTPError as e:
+            return self.send(e.code, {'error': 'Icecast says ' + str(e.code)})
+        except Exception:
+            return self.send(502, {'error': 'Icecast is not running.'})
+        with up:
+            self.send_response(200)
+            for k in ('Content-Type', 'Cache-Control', 'icy-name', 'icy-description', 'icy-br', 'icy-genre'):
+                if up.headers.get(k):
+                    self.send_header(k, up.headers[k])
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            try:
+                while chunk := up.read(8192):
+                    self.wfile.write(chunk)
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # listener left
+
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
+        if ICECAST_PATHS.fullmatch(u.path):
+            return self.relay_icecast(u.path)
         q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
         if u.path in ('/', '/book'):
             return self.send(200, ctype='text/html; charset=utf-8', raw=(HERE / 'static' / 'book.html').read_bytes())
