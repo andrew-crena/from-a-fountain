@@ -55,7 +55,7 @@ Optional FLAC stream: the woodgrain radio page in this repo can play lossless au
 
 ## 3. Python and the letter book
 
-1. Install Python from **python.org/downloads**. On the first screen, tick **Add python.exe to PATH**.
+1. Install Python from **python.org/downloads**. The Python install manager asks a few questions; answer **y** to each. Then open a **new** terminal and check that `py -V` prints a version.
 2. Get this repo onto the computer. Either:
    - install Git for Windows and run `git clone https://github.com/andrew-crena/from-a-fountain`, or
    - on GitHub, click **Code → Download ZIP** and unzip it.
@@ -67,7 +67,7 @@ Optional FLAC stream: the woodgrain radio page in this repo can play lossless au
    `fountain.env` stays on this computer and is never uploaded.
 4. Load your crate. Open a terminal in the `server` folder and run:
    ```
-   python fountain.py import-csv "C:\path\to\your-discogs-export.csv"
+   py fountain.py import-csv "C:\path\to\your-discogs-export.csv"
    ```
    This step is optional. Without it, the service downloads your collection from Discogs when it starts.
 

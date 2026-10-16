@@ -9,5 +9,5 @@ if not exist fountain.env (
 )
 for /f "usebackq eol=# tokens=1,* delims==" %%a in ("fountain.env") do set "%%a=%%b"
 start "ngrok" ngrok http --url=%NGROK_DOMAIN% 8787
-python fountain.py
+py fountain.py
 pause
