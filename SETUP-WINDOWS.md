@@ -24,7 +24,12 @@ Set up each step and check it before moving on.
    <hostname>malika-unflaky-loan.ngrok-free.dev</hostname>
    ```
    Leave `<port>8000</port>` as it is.
-4. Open **Icecast** from the Start menu and click **Start Server**.
+4. Move the log folder somewhere Icecast can write to. Windows blocks writing inside `Program Files`, and Icecast stops with `FATAL: could not open error logging (./log\error.log): Permission denied`.
+   - Create the folder `C:\icecast-log`.
+   - In the `<paths>` section, change `<logdir>./log</logdir>` to `<logdir>C:\icecast-log</logdir>`.
+5. Save, then open **Icecast** from the Start menu and start it.
+
+   The `report-db.xml` and `PRNG seed` warnings in Icecast 2.5 don't affect streaming. A `<hostname> not configured` warning means step 3 wasn't saved.
 
 **Check:** http://localhost:8000 shows the Icecast status page.
 
