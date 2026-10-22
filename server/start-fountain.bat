@@ -29,7 +29,9 @@ call :findxml ICEDIR "%PF%\Icecast"
 call :findxml ICEDIR "%PF86%\Icecast"
 call :findxml ICEDIR "C:\Icecast"
 if not defined ICEDIR goto icenoxml
-start "Icecast" /D "%ICEDIR%" "%ICE%" -c "%ICEDIR%\icecast.xml"
+pushd "%ICEDIR%"
+start "Icecast" "%ICE%" -c icecast.xml
+popd
 echo      started - waiting for port 8000
 set /a tries=0
 :icewait
