@@ -16,14 +16,20 @@ echo === 1 of 4   Icecast ===
 tasklist /fi "imagename eq icecast.exe" | find /i "icecast.exe" >nul
 if not errorlevel 1 goto icedone
 set "ICE="
-call :findexe ICE "%PF%\Icecast\icecast.exe"
-call :findexe ICE "%PF86%\Icecast\icecast.exe"
 call :findexe ICE "%PF%\Icecast\bin\icecast.exe"
 call :findexe ICE "%PF86%\Icecast\bin\icecast.exe"
-call :findexe ICE "C:\Icecast\icecast.exe"
+call :findexe ICE "%PF%\Icecast\icecast.exe"
+call :findexe ICE "%PF86%\Icecast\icecast.exe"
 call :findexe ICE "C:\Icecast\bin\icecast.exe"
+call :findexe ICE "C:\Icecast\icecast.exe"
 if not defined ICE goto icemissing
-for %%d in ("%ICE%") do start "Icecast" /D "%%~dpd" "%ICE%" -c icecast.xml
+REM icecast.xml sits beside the exe, or one level up when the exe is in bin\
+set "ICEDIR="
+call :findxml ICEDIR "%PF%\Icecast"
+call :findxml ICEDIR "%PF86%\Icecast"
+call :findxml ICEDIR "C:\Icecast"
+if not defined ICEDIR goto icenoxml
+start "Icecast" /D "%ICEDIR%" "%ICE%" -c "%ICEDIR%\icecast.xml"
 echo      started - waiting for port 8000
 set /a tries=0
 :icewait
@@ -39,6 +45,9 @@ echo      listening on port 8000
 goto icedone
 :icemissing
 echo      NOT FOUND. Start Icecast from the Start menu, then run this again.
+goto icedone
+:icenoxml
+echo      Found icecast.exe but not icecast.xml. Start Icecast from the Start menu.
 :icedone
 
 echo.
@@ -84,6 +93,11 @@ py fountain.py
 echo.
 echo The letter book stopped.
 pause
+exit /b
+
+:findxml
+if defined %1 exit /b
+if exist "%~2\icecast.xml" set "%1=%~2"
 exit /b
 
 :findexe
