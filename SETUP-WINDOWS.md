@@ -47,7 +47,8 @@ Set up each step and check it before moving on.
    - **Audio:**
      - Device: your turntable interface
      - Codec **MP3**, Bitrate **320k**, Samplerate **44100**
-5. Close Settings and press **▶** (play) in BUTT.
+5. In **Main**, tick **Start streaming after launch** if your BUTT has it, so the launcher's BUTT starts streaming by itself. Click **Save**.
+6. Close Settings and press **▶** (play) in BUTT.
 
 **Check:** http://localhost:8000 now lists `/stream.mp3`. Open http://localhost:8000/stream.mp3 and you should hear the record.
 
@@ -82,7 +83,7 @@ Optional FLAC stream: the woodgrain radio page in this repo can play lossless au
 
 ## 5. Start everything
 
-Double-click **`server\start-fountain.bat`**. It starts all four programs in order — Icecast, BUTT (already streaming), ngrok, then the letter book — and skips any that are already running.
+Double-click **`server\start-fountain.bat`**. It starts all four programs in order — Icecast, BUTT, ngrok, then the letter book — and skips any that are already running. If BUTT doesn't start streaming on its own, press ▶ in it.
 
 **If Windows blocks it** ("Windows protected your PC", or nothing happens): right-click the file, choose **Properties**, tick **Unblock** at the bottom, click OK, then double-click again. Windows marks files that arrived in a download, and unblocking clears that mark.
 

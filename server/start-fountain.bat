@@ -68,8 +68,10 @@ call :findexe BUTT "%PF86%\butt\butt.exe"
 call :findexe BUTT "%LAD%\butt\butt.exe"
 call :findexe BUTT "%LAD%\Programs\butt\butt.exe"
 if not defined BUTT goto buttmissing
-start "BUTT" "%BUTT%" -s
-echo      started and streaming
+REM No -s flag: BUTT quits silently with it. Tick "Start streaming after launch" in BUTT's settings instead.
+start "BUTT" "%BUTT%"
+echo      opened - it streams on its own if "Start streaming after launch" is ticked,
+echo      otherwise press play in BUTT
 goto buttdone
 :buttrunning
 echo      already running - make sure play is pressed
