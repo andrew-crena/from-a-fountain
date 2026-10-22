@@ -87,8 +87,6 @@ Double-click **`server\start-fountain.bat`**. It starts all four programs in ord
 
 **If Windows blocks it** ("Windows protected your PC", or nothing happens): right-click the file, choose **Properties**, tick **Unblock** at the bottom, click OK, then double-click again. Windows marks files that arrived in a download, and unblocking clears that mark.
 
-If ngrok says `unknown flag: --url`, you have an older ngrok. Edit the bat file and change `--url=` to `--domain=`.
-
 If a step prints `NOT FOUND`, that program is installed somewhere the launcher doesn't look. Start it by hand and run the launcher again; it will skip what's already up.
 
 **Checks:**

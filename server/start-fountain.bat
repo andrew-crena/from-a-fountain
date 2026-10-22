@@ -84,7 +84,7 @@ echo.
 echo === 3 of 4   ngrok tunnel ===
 tasklist /fi "imagename eq ngrok.exe" | find /i "ngrok.exe" >nul
 if not errorlevel 1 goto ngrokdone
-start "ngrok" ngrok http --url=%NGROK_DOMAIN% 8787
+start "ngrok" ngrok http --domain=%NGROK_DOMAIN% 8787
 echo      https://%NGROK_DOMAIN%
 goto ngrokafter
 :ngrokdone
