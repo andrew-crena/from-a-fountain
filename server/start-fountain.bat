@@ -29,8 +29,14 @@ call :findxml ICEDIR "%PF%\Icecast"
 call :findxml ICEDIR "%PF86%\Icecast"
 call :findxml ICEDIR "C:\Icecast"
 if not defined ICEDIR goto icenoxml
+REM Launch the way the "Run Icecast (Console)" shortcut does: its icecast.bat, from the install folder
 pushd "%ICEDIR%"
+if not exist "%ICEDIR%\icecast.bat" goto iceexe
+start "Icecast" "%ICEDIR%\icecast.bat"
+goto icelaunched
+:iceexe
 start "Icecast" "%ICE%" -c icecast.xml
+:icelaunched
 popd
 echo      started - waiting for port 8000
 set /a tries=0
@@ -59,6 +65,7 @@ if not errorlevel 1 goto buttrunning
 set "BUTT="
 call :findexe BUTT "%PF%\butt\butt.exe"
 call :findexe BUTT "%PF86%\butt\butt.exe"
+call :findexe BUTT "%LAD%\butt\butt.exe"
 call :findexe BUTT "%LAD%\Programs\butt\butt.exe"
 if not defined BUTT goto buttmissing
 start "BUTT" "%BUTT%" -s
