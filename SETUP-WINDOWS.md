@@ -62,6 +62,7 @@ Optional FLAC stream: the woodgrain radio page in this repo can play lossless au
 3. In the `server` folder, copy `fountain.env.example` to **`fountain.env`** and fill it in:
    - `DISCOGS_TOKEN`: discogs.com → Settings → Developers → **Generate new token**
    - `AUDD_TOKEN`: from your dashboard at audd.io
+   - `DISCOGS_USER`: your Discogs username (the service defaults to `andrewcrena`)
    - `DOCENT_PIN`: any PIN you'll remember for the Docent page
 
    `fountain.env` stays on this computer and is never uploaded.
@@ -81,10 +82,13 @@ Optional FLAC stream: the woodgrain radio page in this repo can play lossless au
 
 ## 5. Start everything
 
-1. Start Icecast (**Start Server**) and press play in BUTT.
-2. Double-click **`server\start-windows.bat`**. It opens ngrok in its own window and runs the letter book service.
+Double-click **`server\start-fountain.bat`**. It starts all four programs in order — Icecast, BUTT (already streaming), ngrok, then the letter book — and skips any that are already running.
+
+**If Windows blocks it** ("Windows protected your PC", or nothing happens): right-click the file, choose **Properties**, tick **Unblock** at the bottom, click OK, then double-click again. Windows marks files that arrived in a download, and unblocking clears that mark.
 
 If ngrok says `unknown flag: --url`, you have an older ngrok. Edit the bat file and change `--url=` to `--domain=`.
+
+If a step prints `NOT FOUND`, that program is installed somewhere the launcher doesn't look. Start it by hand and run the launcher again; it will skip what's already up.
 
 **Checks:**
 - https://malika-unflaky-loan.ngrok-free.dev/stream.mp3 plays.
@@ -94,11 +98,9 @@ If ngrok says `unknown flag: --url`, you have an older ngrok. Edit the bat file 
 
 ## Every set after this
 
-1. Icecast: **Start Server**.
-2. BUTT: **▶**.
-3. Double-click `start-windows.bat`.
+Double-click `start-fountain.bat`. It skips anything already running, so it is safe to run twice.
 
-To stop, close the bat window and the ngrok window, then stop BUTT and Icecast.
+To stop, close all four windows.
 
 ## Back up the book
 

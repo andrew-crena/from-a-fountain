@@ -34,7 +34,7 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 | Variable | Default | |
 |---|---|---|
 | `DISCOGS_TOKEN` | | Discogs personal access token (Settings → Developers) |
-| `DISCOGS_USER` | `andrew-crena` | |
+| `DISCOGS_USER` | `andrewcrena` | |
 | `AUDD_TOKEN` | | AudD API token. Without it, recognition is off and you set records by hand |
 | `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
 | `STREAM_URL` | `ICECAST_URL` + `/stream.mp3` | What recognition listens to |
