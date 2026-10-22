@@ -262,6 +262,8 @@ def card(rel, track_title, source):
         'released': pretty_date(orig.get('released') if rel.get('_original_year') else rel.get('released')),
         'pressing_year': rel.get('year') if rel.get('year') and rel.get('year') != year else None,
         'label': ', '.join(dict.fromkeys(l['name'] for l in rel.get('labels', []))) or None,
+        'catno': next((l['catno'] for l in rel.get('labels', []) if l.get('catno') and l['catno'].lower() != 'none'), None),
+        'side': (re.match(r'[A-Za-z]+', (t or {}).get('position') or '') or [None])[0],
         'recorded_at': recorded_where(orig) or recorded_where(rel),
         'credits': credits[:24], 'cover': cover, 'updated': time.time(),
     }
@@ -358,7 +360,7 @@ def letter_out(r):
     return {k: r[k] for k in ('id', 'created', 'kind', 'artist', 'album', 'song', 'body', 'name')}
 
 
-def letters_for(artist, album, song, limit=30):
+def letters_for(artist, album, song, limit=300):
     a, al, s = norm(artist), norm(album), norm(song)
     if not a:
         return []
