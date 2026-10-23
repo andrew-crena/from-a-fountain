@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f1e9d8">
+<title>From a Fountain · Letter Book</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&family=Special+Elite&display=swap">
+<script src="../fountain-config.js"></script>
+<style>
+/* Paper on a counter: plain readable type for anything to read or tap; handwriting, tape and stamps for character */
+:root{
+  --paper:#f1e9d8; --card:#fbf6ea; --ink:#1f1b16; --soft:#6b6152; --pencil:#8a8170; --red:#c8402c; --tape:#e9dcae; --line:#cdbf9f; --rule:#c9d6e8;
+  --body:'Atkinson Hyperlegible',system-ui,sans-serif; --hand:'Caveat','Segoe Print',cursive; --type:'Special Elite','Courier New',monospace;
+  --wobble:255px 14px 225px 14px/14px 225px 14px 255px;
+  color-scheme:light;
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.5 var(--body);
+  background-image:radial-gradient(#00000008 1px,transparent 1px);background-size:4px 4px}
+.wrap{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 56px max(20px,env(safe-area-inset-left))}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+a{color:var(--ink);text-underline-offset:3px}
+
+.box{border:2px solid var(--ink);border-radius:var(--wobble)}
+.tape{position:absolute;width:86px;height:24px;background:var(--tape);opacity:.85;box-shadow:0 1px 2px #0002;top:-11px;left:50%;transform:translateX(-50%) rotate(-3deg)}
+.stamp{display:inline-block;border:2.5px solid var(--red);color:var(--red);font:700 13px var(--body);letter-spacing:.14em;padding:3px 10px;transform:rotate(-4deg);border-radius:4px;text-transform:uppercase}
+.stamp.off{border-color:var(--pencil);color:var(--pencil)}
+.back{font:700 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none}
+
+/* now playing card */
+.nowcard{position:relative;background:var(--card);padding:20px 16px 16px;margin:22px 2px 0;transform:rotate(-.6deg);box-shadow:0 2px 6px #0002}
+.nowcard .song{font:700 26px/1.15 var(--body);margin:10px 0 2px;overflow-wrap:anywhere}
+.nowcard .by{font-size:17px}
+.meta{font:13px/1.6 var(--type);color:var(--soft);margin-top:12px;border-top:1.5px dashed var(--line);padding-top:10px;overflow-wrap:anywhere}
+.meta:empty{display:none}
+.meta div+div{margin-top:4px}
+.allcred{background:none;border:0;padding:0;margin-top:6px;font:13px var(--type);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* write */
+.q{font:700 36px/1.05 var(--hand);margin:30px 0 6px;transform:rotate(-1deg);text-wrap:balance}
+.sub{margin:0 0 12px;color:var(--soft);font-size:15px}
+.which{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.which button{background:var(--card);padding:6px 13px;font-size:15px}
+.which button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.which button:disabled{opacity:.35;cursor:default}
+.about{margin:0 0 12px;font-size:14px;color:var(--soft)}
+.about b{color:var(--ink)}
+textarea{display:block;width:100%;min-height:150px;resize:vertical;background:var(--card);border:2px solid var(--ink);border-radius:var(--wobble);
+  padding:6px 14px;font:500 24px/30px var(--hand);caret-color:var(--red);
+  background-image:repeating-linear-gradient(transparent 0 29px,var(--rule) 29px 30px);background-attachment:local;background-position:0 6px}
+textarea::placeholder{color:var(--pencil)}
+.starts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 14px}
+.starts button{background:none;border:0;border-bottom:1.5px solid var(--ink);padding:0 2px 1px;font-size:15px}
+.name{width:100%;background:none;border:0;border-bottom:1.5px dashed var(--soft);padding:8px 0;margin-bottom:14px;font-size:16px;border-radius:0}
+.name::placeholder{color:var(--pencil)}
+.big{display:block;width:100%;padding:17px;background:var(--ink);color:var(--card);border:0;border-radius:var(--wobble);font:700 20px var(--body)}
+.big:disabled{opacity:.6}
+.msg{margin:12px 0 0;font:700 24px/1.15 var(--hand);color:var(--red);text-align:center;transform:rotate(-1deg)}
+.other{margin:14px 0 0;font-size:15px;color:var(--soft);text-align:center}
+.other button{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.picker{display:grid;gap:6px;margin-top:10px}
+.picker input{width:100%;background:var(--card);border:2px solid var(--ink);border-radius:var(--wobble);padding:11px 14px;font-size:16px}
+.pick{text-align:left;background:var(--card);padding:10px 14px;font-size:15px}
+
+/* read */
+.readhd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:40px 0 4px}
+.readhd .q{margin:0;font-size:30px}
+.readhd span{font:14px var(--type);color:var(--soft);white-space:nowrap}
+.letter{position:relative;background:var(--card);padding:16px 16px 12px;margin:20px 4px 0;box-shadow:0 2px 5px #0002}
+.letter:nth-child(odd){transform:rotate(-.7deg)} .letter:nth-child(even){transform:rotate(.6deg)}
+.letter:nth-child(3n) .tape{left:22%} .letter:nth-child(3n+1) .tape{left:74%}
+.letter p{margin:6px 0 6px;font:500 25px/1.15 var(--hand);white-space:pre-wrap;overflow-wrap:anywhere}
+.letter .row{display:flex;justify-content:space-between;gap:10px;font:12px var(--type);color:var(--soft)}
+.letter .row b{color:var(--red);font-weight:400;text-align:right}
+.empty{margin:16px 0 0;font:500 24px/1.2 var(--hand);color:var(--soft)}
+.more{display:block;width:100%;margin:24px 0 0;padding:13px;background:var(--card);font:700 16px var(--body)}
+@media (prefers-reduced-motion:reduce){.nowcard,.letter,.q,.stamp{transform:none!important}}
+@media (forced-colors:active){.box,.big,textarea{border:2px solid ButtonText}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="https://andrew-crena.github.io/">← From a Fountain</a>
+
+  <section class="nowcard box" aria-live="polite">
+    <span class="tape" aria-hidden="true"></span>
+    <span class="stamp off" id="stamp">Tuning in…</span>
+    <div class="song" id="song">One moment</div>
+    <div class="by" id="artist"></div>
+    <div class="meta" id="meta"></div>
+  </section>
+
+  <section aria-label="Leave a memory">
+    <div class="q" id="ask">What does this song bring back?</div>
+    <p class="sub">A place, a person, a night. One line is plenty — it goes in the book for whoever listens next.</p>
+    <div class="which" role="group" aria-label="Your memory is about">
+      <button class="box" type="button" data-k="song" aria-pressed="true">this song</button>
+      <button class="box" type="button" data-k="album" aria-pressed="false">the album</button>
+      <button class="box" type="button" data-k="artist" aria-pressed="false">the artist</button>
+    </div>
+    <p class="about" id="aboutLine"></p>
+    <textarea id="body" maxlength="2000" placeholder="I remember…" aria-label="Your memory"></textarea>
+    <div class="starts" aria-label="Need a start?">
+      <button type="button" data-s="I was ">Where were you?</button>
+      <button type="button" data-s="I was with ">Who were you with?</button>
+      <button type="button" data-s="The first time I heard this, ">The first time…</button>
+    </div>
+    <input class="name" id="name" maxlength="60" placeholder="Your name, or leave it blank" aria-label="Your name">
+    <button class="big" id="send" type="button">Leave it in the book</button>
+    <p class="msg" id="msg" role="status" hidden></p>
+    <p class="other">Thinking of a different record? <button type="button" id="change">Write about any song</button></p>
+    <div class="picker" id="picker" hidden>
+      <input type="search" id="q" placeholder="Search a song, album, or artist" aria-label="Search">
+      <div class="picker" id="results"></div>
+    </div>
+  </section>
+
+  <section aria-label="Memories from others">
+    <div class="readhd"><div class="q">What others remember</div><span id="memCount"></span></div>
+    <div id="mem"></div>
+    <button class="more box" id="more" type="button" hidden></button>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+// On the website, fountain-config.js says where the letter book service is; served by the service itself, it's same-origin
+const API = (window.FOUNTAIN_API || '').replace(/\/$/, '') + '/api';
+const H = { 'ngrok-skip-browser-warning': '1' };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const get = p => fetch(API + p, { headers: H, cache: 'no-store' }).then(r => r.json());
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SHOW = 5;
+
+let about = null, kind = 'song', touched = false, lastKey = null, list = [], showAll = false, connected = null;
+
+const label = a => a.song ? `“${a.song}” by ${a.artist}` : a.album ? `${a.album} by ${a.artist}` : a.artist;
+const scoped = (a, k) => ({ artist: a.artist, album: k === 'artist' ? '' : a.album || '', song: k === 'song' ? a.song || '' : '' });
+
+/* ---------- what's playing ---------- */
+function renderNow(n) {
+  const on = !!(n && n.artist && n.source !== 'none');
+  const stamp = $('#stamp');
+  stamp.classList.toggle('off', !on);
+  if (!on) {
+    const closed = connected === false;
+    stamp.textContent = closed ? 'Off air' : 'Between records';
+    $('#song').textContent = closed ? 'The book is closed for now' : 'Nothing on the turntable this second';
+    $('#artist').textContent = closed ? 'Come back during a set.' : 'You can still write about any record below.';
+    $('#meta').innerHTML = '';
+    return;
+  }
+  stamp.textContent = '● Playing now';
+  $('#song').textContent = n.song || n.album;
+  $('#artist').textContent = n.artist;
+
+  const lines = [];
+  const first = [n.side && 'Side ' + n.side, [n.label && n.label.split(',')[0], n.catno].filter(Boolean).join(' '), n.year].filter(Boolean).join(' · ');
+  if (n.song && n.album) lines.push(`from ${esc(n.album)}`);
+  if (first) lines.push(esc(first));
+  const credits = (n.credits || []).map(c => `${esc(c.name)}, ${esc(c.role.toLowerCase())}`);
+  if (credits.length) lines.push(credits.slice(0, 3).join(' · ') + (credits.length > 3 ? `<span id="morecred" hidden> · ${credits.slice(3).join(' · ')}</span>` : ''));
+  if (n.recorded_at && n.recorded_at.length) lines.push('Recorded: ' + esc(n.recorded_at.join('; ')));
+  if (n.pressing_year) lines.push(`This copy: ${esc(n.pressing_year)} pressing`);
+  $('#meta').innerHTML = lines.map(l => `<div>${l}</div>`).join('') +
+    (credits.length > 3 ? `<button class="allcred" type="button" id="allcred">all ${credits.length} credits</button>` : '');
+  const all = $('#allcred');
+  if (all) all.onclick = () => { $('#morecred').hidden = false; all.remove(); };
+}
+
+/* ---------- write ---------- */
+function renderWrite() {
+  $('#ask').textContent = `What does ${{ song: 'this song', album: 'this album', artist: 'this artist' }[kind]} bring back?`;
+  $('#aboutLine').innerHTML = about ? `Writing about <b>${esc(label(about))}</b>` : 'Pick a song, album, or artist to write about.';
+  document.querySelectorAll('.which button').forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.k === kind);
+    b.disabled = !about || (b.dataset.k === 'song' && !about.full?.song) || (b.dataset.k === 'album' && !about.full?.album);
+  });
+}
+
+function setAbout(full, k) {
+  kind = k; about = { ...scoped(full, k), full }; showAll = false;
+  renderWrite(); loadMem();
+}
+
+document.querySelector('.which').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled || !about) return;
+  setAbout(about.full, b.dataset.k);
+});
+
+document.querySelector('.starts').addEventListener('click', e => {
+  const c = e.target.closest('button'); if (!c) return;
+  const t = $('#body');
+  if (!t.value.trim()) t.value = c.dataset.s;
+  t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+});
+
+$('#change').addEventListener('click', () => {
+  $('#picker').hidden = !$('#picker').hidden;
+  if (!$('#picker').hidden) $('#q').focus();
+});
+let timer = null;
+$('#q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(findRecords, 250); });
+async function findRecords() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { $('#results').innerHTML = ''; return; }
+  let rs = [];
+  try { rs = await get('/search?q=' + encodeURIComponent(q)); } catch {}
+  const opts = [];
+  rs.forEach(r => {
+    (r.hit || []).forEach(s => opts.push({ artist: r.artist, album: r.album, song: s }));
+    opts.push({ artist: r.artist, album: r.album, song: '' });
+  });
+  const seen = new Set(), uniq = opts.filter(o => { const k = label(o); return !seen.has(k) && seen.add(k); }).slice(0, 8);
+  uniq.push({ artist: q, album: '', song: '', free: true });
+  $('#results').innerHTML = uniq.map((o, i) => `<button class="pick box" type="button" data-i="${i}">${
+    o.free ? `Write about the artist “${esc(q)}”` : esc(label(o))}</button>`).join('');
+  $('#results').onclick = e => {
+    const b = e.target.closest('.pick'); if (!b) return;
+    const o = uniq[+b.dataset.i];
+    touched = true; $('#picker').hidden = true; $('#q').value = ''; $('#results').innerHTML = '';
+    setAbout(o, o.song ? 'song' : o.album ? 'album' : 'artist');
+    $('#body').focus();
+  };
+}
+
+$('#send').addEventListener('click', async () => {
+  const body = $('#body').value.trim(), msg = $('#msg');
+  if (!about) { $('#change').click(); return; }
+  if (!body) { $('#body').focus(); return; }
+  $('#send').disabled = true;
+  try {
+    const r = await fetch(API + '/letters', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, artist: about.artist, album: about.album, song: about.song, body, name: $('#name').value.trim() }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Could not save it.');
+    $('#body').value = '';
+    msg.textContent = d.pending ? 'Thank you — it’s in the book. It shows up once the docent has read it.' : 'Thank you — it’s in the book.';
+    loadMem();
+  } catch (e) {
+    msg.textContent = e.message === 'Failed to fetch' ? 'Couldn’t reach the book. Check your connection and try again.' : e.message;
+  }
+  msg.hidden = false; $('#send').disabled = false;
+});
+
+/* ---------- read ---------- */
+async function loadMem() {
+  if (!about) { list = []; renderMem(); return; }
+  try { list = await get('/letters?' + new URLSearchParams({ artist: about.artist, album: about.album, song: about.song })); }
+  catch { list = []; }
+  renderMem();
+}
+
+function renderMem() {
+  const tag = { song: 'this song', album: 'the album', artist: about ? about.artist : 'the artist' };
+  // Number entries oldest-first, like pages in a book
+  const order = [...list].sort((a, b) => a.created - b.created);
+  const no = new Map(order.map((l, i) => [l.id, i + 1]));
+  $('#memCount').textContent = list.length ? `${list.length} so far` : '';
+  const shown = showAll ? list : list.slice(0, SHOW);
+  $('#mem').innerHTML = list.length ? shown.map(l => {
+    const d = new Date(l.created * 1000);
+    return `<article class="letter box"><span class="tape" aria-hidden="true"></span>
+      <div class="row"><span>No. ${no.get(l.id)} · ${MON[d.getMonth()]} ${d.getDate()}</span><b>${esc(tag[l.match])}</b></div>
+      <p>${esc(l.body)}</p>
+      <div class="row"><span>— ${esc(l.name || 'anonymous')}${l.match !== 'song' && l.song ? ` · on “${esc(l.song)}”` : ''}</span></div>
+    </article>`;
+  }).join('') : `<p class="empty">No one has written about ${esc(about ? about.artist : 'this record')} yet. Yours would be the first page.</p>`;
+  const more = $('#more');
+  more.hidden = showAll || list.length <= SHOW;
+  more.textContent = `Read all ${list.length}`;
+}
+$('#more').addEventListener('click', () => { showAll = true; renderMem(); });
+
+/* ---------- follow the turntable ---------- */
+async function poll() {
+  let n;
+  try { n = await get('/now'); connected = true; }
+  catch { lastKey = null; if (connected !== false) { connected = false; renderNow(null); if (!about) renderWrite(); } return; }
+  const key = [n.artist, n.song, n.album].join('|');
+  if (key === lastKey) return;
+  lastKey = key; renderNow(n);
+  // Follow the record unless the visitor chose something else to write about
+  if (!touched && n.artist) setAbout({ artist: n.artist, album: n.album, song: n.song }, n.song ? 'song' : 'album');
+  else if (!about) renderWrite();
+}
+
+renderWrite(); renderMem();
+poll();
+setInterval(poll, 15000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f1e9d8">
+<title>From a Fountain · Docent Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&family=Special+Elite&display=swap">
+<script src="../fountain-config.js"></script>
+<style>
+/* Same paper as the rest of the site; the desk is two numbered jobs */
+:root{
+  --paper:#f1e9d8; --card:#fbf6ea; --ink:#1f1b16; --soft:#6b6152; --pencil:#8a8170; --red:#c8402c; --tape:#e9dcae; --line:#cdbf9f;
+  --body:'Atkinson Hyperlegible',system-ui,sans-serif; --hand:'Caveat','Segoe Print',cursive; --type:'Special Elite','Courier New',monospace;
+  --wobble:255px 14px 225px 14px/14px 225px 14px 255px;
+  color-scheme:light;
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.5 var(--body);
+  background-image:radial-gradient(#00000008 1px,transparent 1px);background-size:4px 4px}
+.wrap{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 56px max(20px,env(safe-area-inset-left))}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+p{margin:0}
+.box{border:2px solid var(--ink);border-radius:var(--wobble)}
+.back{font:700 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none}
+h1{font:700 40px/1 var(--hand);margin:14px 0 10px;transform:rotate(-1.5deg)}
+.soft{color:var(--soft);font-size:15px}
+.stamp{display:inline-block;border:2.5px solid var(--red);color:var(--red);font:700 12px var(--body);letter-spacing:.14em;padding:3px 10px;transform:rotate(-3deg);border-radius:4px;text-transform:uppercase}
+.stamp.off{border-color:var(--pencil);color:var(--pencil)}
+input{width:100%;background:var(--card);border:2px solid var(--ink);border-radius:var(--wobble);padding:12px 14px;font-size:17px}
+.dark{display:block;width:100%;padding:14px;background:var(--ink);color:var(--card);border:0;border-radius:var(--wobble);font:700 18px var(--body)}
+.light{background:var(--card);padding:10px 14px;font:700 16px var(--body)}
+.err{margin-top:8px;font:700 22px var(--hand);color:var(--red)}
+
+.lock{display:grid;gap:12px;margin-top:10px}
+.now{position:relative;background:var(--card);padding:16px;margin:14px 2px 0;display:grid;gap:6px;transform:rotate(-.5deg)}
+.now .song{font:700 22px/1.2 var(--body)}
+.now .stamp{justify-self:start}
+.step{display:grid;grid-template-columns:30px 1fr;gap:10px;margin:30px 0 0}
+.step > i{font:700 32px/1 var(--hand);font-style:normal;color:var(--red)}
+.step h2{font:700 19px/1.25 var(--body);margin:0}
+.step .soft{margin:2px 0 10px}
+.rec{background:var(--card);padding:12px 14px;margin-top:10px}
+.rec .t{font-weight:700}
+.tracks{display:grid;gap:4px;margin-top:8px}
+.trk{text-align:left;background:none;border:0;border-bottom:1.5px dashed var(--line);padding:8px 2px;font-size:16px}
+.trk:hover{background:#0000000a}
+.letter{background:var(--card);padding:14px 14px 12px;margin-top:12px}
+.letter p.body{font:500 23px/1.15 var(--hand);white-space:pre-wrap;overflow-wrap:anywhere}
+.letter .about{font:12px var(--type);color:var(--soft);margin:6px 0 10px}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.yn .show{background:var(--ink);color:var(--card)}
+.empty{font:500 22px var(--hand);color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="https://andrew-crena.github.io/">← From a Fountain</a>
+  <h1>Docent desk</h1>
+
+  <section id="lockS" class="lock">
+    <p class="soft">Enter your PIN to set the record and read new letters.</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="Docent PIN">
+    <button class="dark" id="unlock" type="button">Open the desk</button>
+    <p class="err" id="lockMsg" role="status"></p>
+  </section>
+
+  <div id="main" hidden>
+    <div class="now box" id="now" aria-live="polite"></div>
+
+    <section class="step">
+      <i>1</i>
+      <div>
+        <h2>Wrong record, or nothing showing?</h2>
+        <p class="soft">Search your crate and tap the song that's on. That stops automatic recognition until you turn it back on.</p>
+        <input id="q" type="search" placeholder="Search your crate" aria-label="Search your crate">
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <section class="step">
+      <i>2</i>
+      <div>
+        <h2 id="pendHd">Letters waiting for you</h2>
+        <p class="soft">Nothing shows in the letter book until you say yes.</p>
+        <div id="pending"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(() => {
+'use strict';
+const API = (window.FOUNTAIN_API || '').replace(/\/$/, '') + '/api';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let PIN = '';
+try { PIN = sessionStorage.getItem('pin') || ''; } catch {}
+const call = (p, body) => fetch(API + p, {
+  method: body ? 'POST' : 'GET',
+  headers: { 'X-Docent-Pin': PIN, 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+  body: body ? JSON.stringify(body) : undefined }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error); return d; });
+
+async function unlock() {
+  try { await call('/pending'); }
+  catch (e) { $('#lockMsg').textContent = e.message === 'Failed to fetch' ? 'Can’t reach the letter book. Is the launcher running?' : (e.message || 'Wrong PIN.'); return; }
+  try { sessionStorage.setItem('pin', PIN); } catch {}
+  $('#lockS').hidden = true; $('#main').hidden = false;
+  loadNow(); loadPending(); setInterval(loadNow, 15000); setInterval(loadPending, 30000);
+}
+$('#unlock').onclick = () => { PIN = $('#pin').value.trim(); unlock(); };
+$('#pin').onkeydown = e => { if (e.key === 'Enter') $('#unlock').click(); };
+
+function showNow(n) {
+  if (!n.artist) {
+    $('#now').innerHTML = '<span class="stamp off">Listening for the record</span><p class="soft">Nothing identified yet. If a record is on, set it in step 1.</p>';
+    return;
+  }
+  const manual = n.source === 'manual';
+  $('#now').innerHTML = `
+    <span class="stamp${manual ? ' off' : ''}">${manual ? 'Set by you' : '● Found automatically'}</span>
+    <p class="song">${esc(n.song || n.album)}</p>
+    <p class="soft">${esc(n.artist)}${n.album && n.song ? ' · ' + esc(n.album) : ''}</p>
+    ${manual ? '<p class="soft">Automatic recognition is paused.</p><button class="light box" id="auto" type="button">Turn automatic back on</button>' : ''}`;
+  const a = $('#auto'); if (a) a.onclick = async () => showNow(await call('/now', { mode: 'auto' }));
+}
+const loadNow = () => fetch(API + '/now', { headers: { 'ngrok-skip-browser-warning': '1' } }).then(r => r.json()).then(showNow).catch(() => {});
+
+let t;
+$('#q').oninput = () => { clearTimeout(t); t = setTimeout(search, 250); };
+async function search() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { $('#results').innerHTML = ''; return; }
+  const rs = await call('/search?q=' + encodeURIComponent(q)).catch(() => []);
+  $('#results').innerHTML = rs.map((r, i) => `<div class="rec box"><p class="t">${esc(r.album)}</p><p class="soft">${esc(r.artist)}${r.year ? ' · ' + r.year : ''}</p>
+    <div class="tracks">${r.tracks.length ? r.tracks.map((s, j) => `<button class="trk" type="button" data-r="${i}" data-t="${j}">${esc(s)}</button>`).join('')
+      : `<button class="trk" type="button" data-r="${i}" data-t="-1">Set this record</button>`}</div></div>`).join('')
+    || '<p class="empty">Not in the crate.</p>';
+  $('#results').onclick = async e => {
+    const b = e.target.closest('.trk'); if (!b) return;
+    const r = rs[+b.dataset.r];
+    showNow(await call('/now', { release_id: r.release_id, song: r.tracks[+b.dataset.t] || '' }));
+    $('#q').value = ''; $('#results').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+}
+
+async function loadPending() {
+  const ls = await call('/pending').catch(() => []);
+  $('#pendHd').textContent = ls.length ? `Letters waiting for you (${ls.length})` : 'Letters waiting for you';
+  $('#pending').innerHTML = ls.map(l => `<div class="letter box"><p class="body">${esc(l.body)}</p>
+    <p class="about">about ${esc(l.song ? '“' + l.song + '”' : l.album || l.artist)} · ${esc(l.artist)}${l.name ? ' · from ' + esc(l.name) : ''}</p>
+    <div class="yn"><button class="light box show" type="button" data-id="${l.id}" data-a="approve">Show it</button><button class="light box" type="button" data-id="${l.id}" data-a="reject">Hide it</button></div></div>`).join('')
+    || '<p class="empty">All caught up.</p>';
+}
+$('#pending').onclick = async e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  await call(`/letters/${b.dataset.id}/${b.dataset.a}`, {}).catch(() => {});
+  loadPending();
+};
+
+if (PIN) unlock();
+})();
+</script>
+</body>
+</html>

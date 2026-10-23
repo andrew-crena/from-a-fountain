@@ -84,6 +84,14 @@
 .cr-status::before{content:'▸ ';color:var(--amber)}
 .cr-status a{color:var(--amber)}
 
+/* NOW SPINNING */
+.cr-now{display:grid;gap:2px;margin:12px 4px 0;padding:12px 14px;border-radius:8px;text-decoration:none;color:var(--cream);
+  background:linear-gradient(180deg,#1d1d1d,#0e0e0e);border:1px solid #3a2712}
+.cr-now[hidden]{display:none}
+.cr-now .k{font-size:11px;letter-spacing:.2em;color:var(--amber);font-weight:600}
+.cr-now .t{font-size:18px;font-weight:500}
+.cr-now .go{font-size:14px;color:#c9b48c}
+
 /* STAGES */
 .cr-stage{margin-top:14px}
 .cr-stage.hidden{display:none}
@@ -102,7 +110,8 @@
 <div class="cr cr-search"
   data-channel="UCaOM2mNthp-3w-bGoTy8MAg"
   data-audio-url="https://malika-unflaky-loan.ngrok-free.dev/stream.ogg"
-  data-audio-fallback="https://malika-unflaky-loan.ngrok-free.dev/stream.mp3">
+  data-audio-fallback="https://malika-unflaky-loan.ngrok-free.dev/stream.mp3"
+  data-api-url="">
 
   <div class="cr-unit"><div class="cr-face">
     <div class="cr-top">
@@ -130,6 +139,12 @@
   </div></div>
 
   <div class="cr-status" role="status" aria-live="polite"></div>
+
+  <a class="cr-now" hidden target="_blank" rel="noopener">
+    <span class="k">NOW SPINNING</span>
+    <span class="t"></span>
+    <span class="go">Leave a memory about it →</span>
+  </a>
 
   <div class="cr-stage cr-video hidden"><div class="cr-frame"><div class="cr-video-mount"></div></div></div>
 
@@ -336,6 +351,24 @@ function goListen() {
 watchBtn.addEventListener('click', goWatch);
 listenBtn.addEventListener('click', goListen);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !mode) refresh(); });
+
+/* ---------- Now spinning (from the letter book service) ---------- */
+const API = (root.dataset.apiUrl || '').replace(/\/$/, '');
+const nowEl = $('.cr-now');
+async function nowSpinning() {
+  if (!API) return;
+  try {
+    const r = await fetch(API + '/api/now', { cache: 'no-store', headers: { 'ngrok-skip-browser-warning': '1' } });
+    const n = await r.json();
+    nowEl.hidden = !n.artist;
+    if (n.artist) {
+      nowEl.querySelector('.t').textContent = `${n.song || n.album} — ${n.artist}`;
+      nowEl.href = API + '/';
+    }
+  } catch {}
+}
+nowSpinning();
+setInterval(nowSpinning, 20000);
 
 label();
 say('Tuning…');

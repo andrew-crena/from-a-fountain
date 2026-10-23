@@ -1,0 +1,301 @@
+[
+ {
+  "id": 1,
+  "title": "Journey In Satchidananda",
+  "year": 1971,
+  "released": "1971",
+  "artists": [
+   {
+    "name": "Alice Coltrane"
+   }
+  ],
+  "labels": [
+   {
+    "name": "Impulse!"
+   }
+  ],
+  "companies": [
+   {
+    "name": "Coltrane Home Studio, Dix Hills",
+    "entity_type_name": "Recorded At"
+   },
+   {
+    "name": "The Village Gate",
+    "entity_type_name": "Recorded At"
+   }
+  ],
+  "extraartists": [
+   {
+    "name": "Alice Coltrane",
+    "role": "Harp, Piano",
+    "tracks": ""
+   },
+   {
+    "name": "Pharoah Sanders",
+    "role": "Soprano Saxophone",
+    "tracks": ""
+   },
+   {
+    "name": "Cecil McBee",
+    "role": "Bass",
+    "tracks": ""
+   },
+   {
+    "name": "Rashied Ali",
+    "role": "Drums",
+    "tracks": ""
+   },
+   {
+    "name": "Tulsi Reynolds",
+    "role": "Tambura",
+    "tracks": ""
+   },
+   {
+    "name": "Charlie Haden",
+    "role": "Bass",
+    "tracks": "B3"
+   },
+   {
+    "name": "Vishnu Wood",
+    "role": "Oud",
+    "tracks": "B3"
+   },
+   {
+    "name": "Ed Michel",
+    "role": "Producer",
+    "tracks": ""
+   }
+  ],
+  "images": [],
+  "tracklist": [
+   {
+    "position": "A1",
+    "title": "Journey In Satchidananda",
+    "type_": "track"
+   },
+   {
+    "position": "A2",
+    "title": "Shiva-Loka",
+    "type_": "track"
+   },
+   {
+    "position": "B1",
+    "title": "Stopover Bombay",
+    "type_": "track"
+   },
+   {
+    "position": "B2",
+    "title": "Something About John Coltrane",
+    "type_": "track"
+   },
+   {
+    "position": "B3",
+    "title": "Isis And Osiris",
+    "type_": "track"
+   }
+  ]
+ },
+ {
+  "id": 2,
+  "title": "Remain In Light",
+  "year": 1980,
+  "released": "1980-10-08",
+  "artists": [
+   {
+    "name": "Talking Heads"
+   }
+  ],
+  "labels": [
+   {
+    "name": "Sire"
+   }
+  ],
+  "companies": [
+   {
+    "name": "Compass Point Studios",
+    "entity_type_name": "Recorded At"
+   },
+   {
+    "name": "Sigma Sound Studios",
+    "entity_type_name": "Recorded At"
+   }
+  ],
+  "extraartists": [
+   {
+    "name": "David Byrne",
+    "role": "Vocals, Guitar",
+    "tracks": ""
+   },
+   {
+    "name": "Tina Weymouth",
+    "role": "Bass",
+    "tracks": ""
+   },
+   {
+    "name": "Chris Frantz",
+    "role": "Drums",
+    "tracks": ""
+   },
+   {
+    "name": "Jerry Harrison",
+    "role": "Keyboards, Guitar",
+    "tracks": ""
+   },
+   {
+    "name": "Adrian Belew",
+    "role": "Guitar",
+    "tracks": ""
+   },
+   {
+    "name": "Brian Eno",
+    "role": "Producer",
+    "tracks": ""
+   }
+  ],
+  "images": [],
+  "tracklist": [
+   {
+    "position": "A1",
+    "title": "Born Under Punches (The Heat Goes On)",
+    "type_": "track"
+   },
+   {
+    "position": "A2",
+    "title": "Crosseyed And Painless",
+    "type_": "track"
+   },
+   {
+    "position": "A3",
+    "title": "The Great Curve",
+    "type_": "track"
+   },
+   {
+    "position": "B1",
+    "title": "Once In A Lifetime",
+    "type_": "track"
+   },
+   {
+    "position": "B2",
+    "title": "Houses In Motion",
+    "type_": "track"
+   },
+   {
+    "position": "B3",
+    "title": "Seen And Not Seen",
+    "type_": "track"
+   },
+   {
+    "position": "B4",
+    "title": "Listening Wind",
+    "type_": "track"
+   },
+   {
+    "position": "B5",
+    "title": "The Overload",
+    "type_": "track"
+   }
+  ]
+ },
+ {
+  "id": 3,
+  "title": "Blue",
+  "year": 1971,
+  "released": "1971-06-22",
+  "artists": [
+   {
+    "name": "Joni Mitchell"
+   }
+  ],
+  "labels": [
+   {
+    "name": "Reprise Records"
+   }
+  ],
+  "companies": [
+   {
+    "name": "A&M Studios",
+    "entity_type_name": "Recorded At"
+   }
+  ],
+  "extraartists": [
+   {
+    "name": "Joni Mitchell",
+    "role": "Vocals, Guitar, Piano, Dulcimer, Producer",
+    "tracks": ""
+   },
+   {
+    "name": "James Taylor",
+    "role": "Guitar",
+    "tracks": ""
+   },
+   {
+    "name": "Stephen Stills",
+    "role": "Bass, Guitar",
+    "tracks": ""
+   },
+   {
+    "name": "Sneaky Pete Kleinow",
+    "role": "Pedal Steel",
+    "tracks": ""
+   },
+   {
+    "name": "Russ Kunkel",
+    "role": "Drums",
+    "tracks": ""
+   }
+  ],
+  "images": [],
+  "tracklist": [
+   {
+    "position": "A1",
+    "title": "All I Want",
+    "type_": "track"
+   },
+   {
+    "position": "A2",
+    "title": "My Old Man",
+    "type_": "track"
+   },
+   {
+    "position": "A3",
+    "title": "Little Green",
+    "type_": "track"
+   },
+   {
+    "position": "A4",
+    "title": "Carey",
+    "type_": "track"
+   },
+   {
+    "position": "A5",
+    "title": "Blue",
+    "type_": "track"
+   },
+   {
+    "position": "B1",
+    "title": "California",
+    "type_": "track"
+   },
+   {
+    "position": "B2",
+    "title": "This Flight Tonight",
+    "type_": "track"
+   },
+   {
+    "position": "B3",
+    "title": "River",
+    "type_": "track"
+   },
+   {
+    "position": "B4",
+    "title": "A Case Of You",
+    "type_": "track"
+   },
+   {
+    "position": "B5",
+    "title": "The Last Time I Saw Richard",
+    "type_": "track"
+   }
+  ]
+ }
+]
