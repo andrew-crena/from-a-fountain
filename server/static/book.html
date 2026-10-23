@@ -3,136 +3,114 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e0d0b">
+<meta name="theme-color" content="#f1e9d8">
 <title>From a Fountain · Letter Book</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&family=Special+Elite&display=swap">
 <script src="../fountain-config.js"></script>
 <style>
-/* Dark sleeve: the record and its label on black; liner-note type for everything you read */
+/* Paper on a counter: plain readable type for anything to read or tap; handwriting, tape and stamps for character */
 :root{
-  --bg:#0e0d0b; --raise:#181611; --line:#2e2a22; --ink:#f2ede3; --muted:#9b9384; --gold:#e6b422; --gold-ink:#1a1405; --live:#ff4b3a;
-  --cond:'Archivo Narrow','Arial Narrow',sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace; --serif:'Bodoni Moda',Georgia,serif;
-  color-scheme:dark;
+  --paper:#f1e9d8; --card:#fbf6ea; --ink:#1f1b16; --soft:#6b6152; --pencil:#8a8170; --red:#c8402c; --tape:#e9dcae; --line:#cdbf9f; --rule:#c9d6e8;
+  --body:'Atkinson Hyperlegible',system-ui,sans-serif; --hand:'Caveat','Segoe Print',cursive; --type:'Special Elite','Courier New',monospace;
+  --wobble:255px 14px 225px 14px/14px 225px 14px 255px;
+  color-scheme:light;
 }
 *{box-sizing:border-box} [hidden]{display:none!important}
-html{background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--mono)}
-.wrap{max-width:460px;margin:0 auto;padding:0 max(20px,env(safe-area-inset-right)) 56px max(20px,env(safe-area-inset-left))}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.5 var(--body);
+  background-image:radial-gradient(#00000008 1px,transparent 1px);background-size:4px 4px}
+.wrap{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 56px max(20px,env(safe-area-inset-left))}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
-a{color:inherit}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+a{color:var(--ink);text-underline-offset:3px}
 
-/* top bar */
-.live{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:12px;
-  padding:calc(12px + env(safe-area-inset-top)) 0 10px;border-bottom:3px solid var(--ink);font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase}
-.live .on{display:flex;align-items:center;gap:8px;color:var(--gold)}
-.live .home{text-decoration:none;color:var(--muted)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.6s infinite}
-.off .dot{background:var(--muted);animation:none}
-.off .live .on{color:var(--muted)}
-@keyframes pulse{0%{box-shadow:0 0 0 0 #ff4b3a88}70%{box-shadow:0 0 0 8px #ff4b3a00}100%{box-shadow:0 0 0 0 #ff4b3a00}}
+.box{border:2px solid var(--ink);border-radius:var(--wobble)}
+.tape{position:absolute;width:86px;height:24px;background:var(--tape);opacity:.85;box-shadow:0 1px 2px #0002;top:-11px;left:50%;transform:translateX(-50%) rotate(-3deg)}
+.stamp{display:inline-block;border:2.5px solid var(--red);color:var(--red);font:700 13px var(--body);letter-spacing:.14em;padding:3px 10px;transform:rotate(-4deg);border-radius:4px;text-transform:uppercase}
+.stamp.off{border-color:var(--pencil);color:var(--pencil)}
+.back{font:700 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none}
 
-/* the record */
-.disc{position:relative;width:min(76vw,300px);aspect-ratio:1;margin:26px auto 22px;border-radius:50%;
-  background:radial-gradient(circle,var(--bg) 0 2%,transparent 2.2%),repeating-radial-gradient(circle,#191714 0 1.5px,#0b0a09 1.5px 3.5px)}
-.disc::before{content:'';position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 0deg,transparent 0 40deg,#ffffff14 60deg,transparent 80deg,transparent 220deg,#ffffff0d 240deg,transparent 260deg);
-  animation:spin 1.8s linear infinite}
-.off .disc::before{animation:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.label{position:absolute;inset:31%;border-radius:50%;background:var(--gold);color:var(--gold-ink);overflow:hidden;
-  display:grid;place-content:center;text-align:center;padding:9%;gap:3px}
-.label small{font:500 8px var(--mono);letter-spacing:.14em;text-transform:uppercase}
-.label b{font:italic 400 14px/1.05 var(--serif);hyphens:auto;overflow-wrap:break-word}
-.label b.long{font-size:11px}
-.label b.longer{font-size:9px}
-.off .label{background:#2a261f;color:var(--muted)}
-@media (prefers-reduced-motion:reduce){.dot,.disc::before{animation:none}}
-
-.song{font:700 40px/.95 var(--cond);text-transform:uppercase;margin:0;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
-.artist{font:600 19px var(--cond);text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:6px 0 2px}
-.album{font-size:12px;color:var(--muted)}
-.credits{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:18px 0 0;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:12px;line-height:1.35}
-.credits div{min-width:0;overflow-wrap:anywhere}
-.credits span{color:var(--muted);display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-.credits .wide{grid-column:1/-1}
-.allcred{grid-column:1/-1;justify-self:start;background:none;border:0;padding:0;color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px}
+/* now playing card */
+.nowcard{position:relative;background:var(--card);padding:20px 16px 16px;margin:22px 2px 0;transform:rotate(-.6deg);box-shadow:0 2px 6px #0002}
+.nowcard .song{font:700 26px/1.15 var(--body);margin:10px 0 2px;overflow-wrap:anywhere}
+.nowcard .by{font-size:17px}
+.meta{font:13px/1.6 var(--type);color:var(--soft);margin-top:12px;border-top:1.5px dashed var(--line);padding-top:10px;overflow-wrap:anywhere}
+.meta:empty{display:none}
+.meta div+div{margin-top:4px}
+.allcred{background:none;border:0;padding:0;margin-top:6px;font:13px var(--type);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 
 /* write */
-.write{margin:36px 0 0;display:grid;gap:14px}
-.ask{font:italic 400 32px/1.1 var(--serif);margin:0;text-wrap:balance}
-.ask em{color:var(--gold)}
-.kinds{display:flex;gap:6px;flex-wrap:wrap}
-.kinds button{background:none;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.kinds button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
-.kinds button:disabled{opacity:.35;cursor:default}
-.help{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{background:none;border:1px solid var(--line);border-radius:20px;padding:8px 12px;font-size:12px}
-textarea{width:100%;min-height:130px;resize:vertical;background:var(--raise);caret-color:var(--gold);border:1px solid var(--line);border-radius:6px;
-  padding:14px;font:italic 400 19px/1.4 var(--serif)}
-textarea::placeholder{color:#6d665a}
-.name{width:100%;background:none;border:0;border-bottom:1px solid var(--line);font-size:14px;padding:10px 0;border-radius:0}
-.name::placeholder{color:#6d665a}
-.leave{width:100%;padding:16px;border:0;border-radius:40px;background:var(--gold);color:var(--gold-ink);font:700 15px var(--cond);letter-spacing:.14em;text-transform:uppercase}
-.leave:disabled{opacity:.6}
-.msg{margin:0;font:italic 400 18px var(--serif);color:var(--gold);text-align:center}
-.other{margin:0;font-size:12px;color:var(--muted);text-align:center}
-.other button{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-size:12px}
-.about{font-size:12px;color:var(--muted)}
-.about b{color:var(--ink);font-weight:500}
-.picker{display:grid;gap:6px}
-.picker input{width:100%;background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:14px}
-.pick{text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0;font-size:13px}
+.q{font:700 36px/1.05 var(--hand);margin:30px 0 6px;transform:rotate(-1deg);text-wrap:balance}
+.sub{margin:0 0 12px;color:var(--soft);font-size:15px}
+.which{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.which button{background:var(--card);padding:6px 13px;font-size:15px}
+.which button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.which button:disabled{opacity:.35;cursor:default}
+.about{margin:0 0 12px;font-size:14px;color:var(--soft)}
+.about b{color:var(--ink)}
+textarea{display:block;width:100%;min-height:150px;resize:vertical;background:var(--card);border:2px solid var(--ink);border-radius:var(--wobble);
+  padding:6px 14px;font:500 24px/30px var(--hand);caret-color:var(--red);
+  background-image:repeating-linear-gradient(transparent 0 29px,var(--rule) 29px 30px);background-attachment:local;background-position:0 6px}
+textarea::placeholder{color:var(--pencil)}
+.starts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 14px}
+.starts button{background:none;border:0;border-bottom:1.5px solid var(--ink);padding:0 2px 1px;font-size:15px}
+.name{width:100%;background:none;border:0;border-bottom:1.5px dashed var(--soft);padding:8px 0;margin-bottom:14px;font-size:16px;border-radius:0}
+.name::placeholder{color:var(--pencil)}
+.big{display:block;width:100%;padding:17px;background:var(--ink);color:var(--card);border:0;border-radius:var(--wobble);font:700 20px var(--body)}
+.big:disabled{opacity:.6}
+.msg{margin:12px 0 0;font:700 24px/1.15 var(--hand);color:var(--red);text-align:center;transform:rotate(-1deg)}
+.other{margin:14px 0 0;font-size:15px;color:var(--soft);text-align:center}
+.other button{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.picker{display:grid;gap:6px;margin-top:10px}
+.picker input{width:100%;background:var(--card);border:2px solid var(--ink);border-radius:var(--wobble);padding:11px 14px;font-size:16px}
+.pick{text-align:left;background:var(--card);padding:10px 14px;font-size:15px}
 
 /* read */
-.read{margin:46px 0 0}
-.count{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:3px solid var(--ink);padding-bottom:6px}
-.count h2{font:700 22px var(--cond);text-transform:uppercase;margin:0;letter-spacing:.02em}
-.count span{font-size:11px;letter-spacing:.12em;color:var(--gold);white-space:nowrap}
-.mem{padding:18px 0;border-bottom:1px solid var(--line);display:grid;gap:8px}
-.mem .no{font-size:10px;letter-spacing:.16em;color:var(--muted);display:flex;justify-content:space-between;gap:10px;text-transform:uppercase}
-.mem .no b{color:var(--gold);font-weight:500;text-align:right}
-.mem p{margin:0;font:italic 400 21px/1.35 var(--serif);white-space:pre-wrap;overflow-wrap:anywhere}
-.mem .who{font-size:12px;color:var(--muted)}
-.empty{padding:22px 0;color:var(--muted);font:italic 400 19px/1.4 var(--serif)}
-.more{display:block;width:100%;margin:20px 0 0;padding:14px;background:none;border:1px solid var(--line);border-radius:40px;font:600 13px var(--cond);letter-spacing:.14em;text-transform:uppercase}
+.readhd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:40px 0 4px}
+.readhd .q{margin:0;font-size:30px}
+.readhd span{font:14px var(--type);color:var(--soft);white-space:nowrap}
+.letter{position:relative;background:var(--card);padding:16px 16px 12px;margin:20px 4px 0;box-shadow:0 2px 5px #0002}
+.letter:nth-child(odd){transform:rotate(-.7deg)} .letter:nth-child(even){transform:rotate(.6deg)}
+.letter:nth-child(3n) .tape{left:22%} .letter:nth-child(3n+1) .tape{left:74%}
+.letter p{margin:6px 0 6px;font:500 25px/1.15 var(--hand);white-space:pre-wrap;overflow-wrap:anywhere}
+.letter .row{display:flex;justify-content:space-between;gap:10px;font:12px var(--type);color:var(--soft)}
+.letter .row b{color:var(--red);font-weight:400;text-align:right}
+.empty{margin:16px 0 0;font:500 24px/1.2 var(--hand);color:var(--soft)}
+.more{display:block;width:100%;margin:24px 0 0;padding:13px;background:var(--card);font:700 16px var(--body)}
+@media (prefers-reduced-motion:reduce){.nowcard,.letter,.q,.stamp{transform:none!important}}
+@media (forced-colors:active){.box,.big,textarea{border:2px solid ButtonText}}
 </style>
 </head>
-<body class="off">
+<body>
 <div class="wrap">
-  <div class="live">
-    <span class="on"><span class="dot"></span><span id="liveText">Tuning in…</span></span>
-    <a class="home" id="sideText" href="https://andrew-crena.github.io/">From a Fountain</a>
-  </div>
+  <a class="back" href="https://andrew-crena.github.io/">← From a Fountain</a>
 
-  <div class="disc" aria-hidden="true"><div class="label" id="label"><small>From a Fountain</small><b>…</b></div></div>
-
-  <section id="np" aria-live="polite">
-    <h1 class="song" id="song">Nothing spinning</h1>
-    <div class="artist" id="artist"></div>
-    <div class="album" id="album">You can still leave a memory of any record.</div>
-    <div class="credits" id="credits" hidden></div>
+  <section class="nowcard box" aria-live="polite">
+    <span class="tape" aria-hidden="true"></span>
+    <span class="stamp off" id="stamp">Tuning in…</span>
+    <div class="song" id="song">One moment</div>
+    <div class="by" id="artist"></div>
+    <div class="meta" id="meta"></div>
   </section>
 
-  <section class="write" aria-label="Leave a memory">
-    <p class="ask" id="ask">What does <em>this song</em> bring back?</p>
-    <div class="kinds" role="group" aria-label="Your memory is about">
-      <button type="button" data-k="song" aria-pressed="true">This song</button>
-      <button type="button" data-k="album" aria-pressed="false">The album</button>
-      <button type="button" data-k="artist" aria-pressed="false">The artist</button>
+  <section aria-label="Leave a memory">
+    <div class="q" id="ask">What does this song bring back?</div>
+    <p class="sub">A place, a person, a night. One line is plenty — it goes in the book for whoever listens next.</p>
+    <div class="which" role="group" aria-label="Your memory is about">
+      <button class="box" type="button" data-k="song" aria-pressed="true">this song</button>
+      <button class="box" type="button" data-k="album" aria-pressed="false">the album</button>
+      <button class="box" type="button" data-k="artist" aria-pressed="false">the artist</button>
     </div>
     <p class="about" id="aboutLine"></p>
-    <p class="help">A place, a person, a night, a feeling. One line is plenty. It goes in the book for whoever listens next.</p>
-    <div class="chips">
-      <button type="button" class="chip" data-s="I was ">Where were you?</button>
-      <button type="button" class="chip" data-s="I was with ">Who were you with?</button>
-      <button type="button" class="chip" data-s="The first time I heard this, ">The first time I heard it…</button>
-    </div>
     <textarea id="body" maxlength="2000" placeholder="I remember…" aria-label="Your memory"></textarea>
+    <div class="starts" aria-label="Need a start?">
+      <button type="button" data-s="I was ">Where were you?</button>
+      <button type="button" data-s="I was with ">Who were you with?</button>
+      <button type="button" data-s="The first time I heard this, ">The first time…</button>
+    </div>
     <input class="name" id="name" maxlength="60" placeholder="Your name, or leave it blank" aria-label="Your name">
-    <button class="leave" id="send" type="button">Leave it in the book</button>
+    <button class="big" id="send" type="button">Leave it in the book</button>
     <p class="msg" id="msg" role="status" hidden></p>
     <p class="other">Thinking of a different record? <button type="button" id="change">Write about any song</button></p>
     <div class="picker" id="picker" hidden>
@@ -141,10 +119,10 @@ textarea::placeholder{color:#6d665a}
     </div>
   </section>
 
-  <section class="read" aria-label="Memories from others">
-    <div class="count"><h2>Others remember</h2><span id="memCount"></span></div>
+  <section aria-label="Memories from others">
+    <div class="readhd"><div class="q">What others remember</div><span id="memCount"></span></div>
     <div id="mem"></div>
-    <button class="more" id="more" type="button" hidden></button>
+    <button class="more box" id="more" type="button" hidden></button>
   </section>
 </div>
 
@@ -157,7 +135,7 @@ const H = { 'ngrok-skip-browser-warning': '1' };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const get = p => fetch(API + p, { headers: H, cache: 'no-store' }).then(r => r.json());
-const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const SHOW = 5;
 
 let about = null, kind = 'song', touched = false, lastKey = null, list = [], showAll = false, connected = null;
@@ -165,48 +143,42 @@ let about = null, kind = 'song', touched = false, lastKey = null, list = [], sho
 const label = a => a.song ? `“${a.song}” by ${a.artist}` : a.album ? `${a.album} by ${a.artist}` : a.artist;
 const scoped = (a, k) => ({ artist: a.artist, album: k === 'artist' ? '' : a.album || '', song: k === 'song' ? a.song || '' : '' });
 
-/* ---------- now spinning ---------- */
+/* ---------- what's playing ---------- */
 function renderNow(n) {
   const on = !!(n && n.artist && n.source !== 'none');
-  document.body.classList.toggle('off', !on);
+  const stamp = $('#stamp');
+  stamp.classList.toggle('off', !on);
   if (!on) {
-    $('#liveText').textContent = connected === false ? 'Not connected' : 'Nothing on the turntable';
-    $('#label').innerHTML = '<small>From a Fountain</small><b>Between records</b>';
-    $('#song').textContent = connected === false ? 'The book is closed' : 'Between records';
-    $('#artist').textContent = '';
-    $('#album').textContent = connected === false
-      ? 'The letter book isn’t connected right now. Try again during a set.'
-      : 'Nothing’s spinning this second. You can still leave a memory of any record.';
-    $('#credits').hidden = true;
+    const closed = connected === false;
+    stamp.textContent = closed ? 'Off air' : 'Between records';
+    $('#song').textContent = closed ? 'The book is closed for now' : 'Nothing on the turntable this second';
+    $('#artist').textContent = closed ? 'Come back during a set.' : 'You can still write about any record below.';
+    $('#meta').innerHTML = '';
     return;
   }
-  const title = n.song || n.album;
-  $('#liveText').textContent = 'On the turntable now';
-  $('#label').innerHTML = `<small>${esc([n.label && n.label.split(',')[0], n.catno].filter(Boolean).join(' · ') || 'Now spinning')}</small>
-    <b class="${title.length > 34 ? 'longer' : title.length > 16 ? 'long' : ''}">${esc(title)}</b><small>${n.side ? 'Side ' + esc(n.side) : '33⅓'}</small>`;
-  $('#song').textContent = title;
+  stamp.textContent = '● Playing now';
+  $('#song').textContent = n.song || n.album;
   $('#artist').textContent = n.artist;
-  $('#album').innerHTML = [n.song && n.album ? `from <i>${esc(n.album)}</i>` : '', n.released || n.year].filter(Boolean).join(' · ');
 
-  const cells = [];
-  const players = n.credits || [];
-  players.forEach((c, i) => cells.push(`<div class="cr${i >= 6 ? ' x' : ''}"${i >= 6 ? ' hidden' : ''}><span>${esc(c.role)}</span>${esc(c.name)}</div>`));
-  if (players.length > 6) cells.push(`<button class="allcred" type="button" id="allcred">All ${players.length} credits</button>`);
-  if (n.recorded_at && n.recorded_at.length) cells.push(`<div class="wide"><span>Recorded</span>${esc(n.recorded_at.join('; '))}</div>`);
-  const copy = [n.pressing_year && n.pressing_year + ' pressing', n.label].filter(Boolean).join(' · ');
-  if (copy) cells.push(`<div class="wide"><span>This copy</span>${esc(copy)}</div>`);
-  $('#credits').innerHTML = cells.join('');
-  $('#credits').hidden = !cells.length;
+  const lines = [];
+  const first = [n.side && 'Side ' + n.side, [n.label && n.label.split(',')[0], n.catno].filter(Boolean).join(' '), n.year].filter(Boolean).join(' · ');
+  if (n.song && n.album) lines.push(`from ${esc(n.album)}`);
+  if (first) lines.push(esc(first));
+  const credits = (n.credits || []).map(c => `${esc(c.name)}, ${esc(c.role.toLowerCase())}`);
+  if (credits.length) lines.push(credits.slice(0, 3).join(' · ') + (credits.length > 3 ? `<span id="morecred" hidden> · ${credits.slice(3).join(' · ')}</span>` : ''));
+  if (n.recorded_at && n.recorded_at.length) lines.push('Recorded: ' + esc(n.recorded_at.join('; ')));
+  if (n.pressing_year) lines.push(`This copy: ${esc(n.pressing_year)} pressing`);
+  $('#meta').innerHTML = lines.map(l => `<div>${l}</div>`).join('') +
+    (credits.length > 3 ? `<button class="allcred" type="button" id="allcred">all ${credits.length} credits</button>` : '');
   const all = $('#allcred');
-  if (all) all.onclick = () => { document.querySelectorAll('#credits .x').forEach(e => e.hidden = false); all.remove(); };
+  if (all) all.onclick = () => { $('#morecred').hidden = false; all.remove(); };
 }
 
 /* ---------- write ---------- */
 function renderWrite() {
-  const word = { song: 'this song', album: 'this album', artist: 'this artist' }[kind];
-  $('#ask').innerHTML = `What does <em>${word}</em> bring back?`;
+  $('#ask').textContent = `What does ${{ song: 'this song', album: 'this album', artist: 'this artist' }[kind]} bring back?`;
   $('#aboutLine').innerHTML = about ? `Writing about <b>${esc(label(about))}</b>` : 'Pick a song, album, or artist to write about.';
-  document.querySelectorAll('.kinds button').forEach(b => {
+  document.querySelectorAll('.which button').forEach(b => {
     b.setAttribute('aria-pressed', b.dataset.k === kind);
     b.disabled = !about || (b.dataset.k === 'song' && !about.full?.song) || (b.dataset.k === 'album' && !about.full?.album);
   });
@@ -217,13 +189,13 @@ function setAbout(full, k) {
   renderWrite(); loadMem();
 }
 
-document.querySelector('.kinds').addEventListener('click', e => {
+document.querySelector('.which').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled || !about) return;
   setAbout(about.full, b.dataset.k);
 });
 
-document.querySelector('.chips').addEventListener('click', e => {
-  const c = e.target.closest('.chip'); if (!c) return;
+document.querySelector('.starts').addEventListener('click', e => {
+  const c = e.target.closest('button'); if (!c) return;
   const t = $('#body');
   if (!t.value.trim()) t.value = c.dataset.s;
   t.focus(); t.setSelectionRange(t.value.length, t.value.length);
@@ -247,7 +219,7 @@ async function findRecords() {
   });
   const seen = new Set(), uniq = opts.filter(o => { const k = label(o); return !seen.has(k) && seen.add(k); }).slice(0, 8);
   uniq.push({ artist: q, album: '', song: '', free: true });
-  $('#results').innerHTML = uniq.map((o, i) => `<button class="pick" type="button" data-i="${i}">${
+  $('#results').innerHTML = uniq.map((o, i) => `<button class="pick box" type="button" data-i="${i}">${
     o.free ? `Write about the artist “${esc(q)}”` : esc(label(o))}</button>`).join('');
   $('#results').onclick = e => {
     const b = e.target.closest('.pick'); if (!b) return;
@@ -269,7 +241,7 @@ $('#send').addEventListener('click', async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Could not save it.');
     $('#body').value = '';
-    msg.textContent = d.pending ? 'Thank you. It’s in the book, and shows up once the docent has read it.' : 'Thank you. It’s in the book.';
+    msg.textContent = d.pending ? 'Thank you — it’s in the book. It shows up once the docent has read it.' : 'Thank you — it’s in the book.';
     loadMem();
   } catch (e) {
     msg.textContent = e.message === 'Failed to fetch' ? 'Couldn’t reach the book. Check your connection and try again.' : e.message;
@@ -286,23 +258,23 @@ async function loadMem() {
 }
 
 function renderMem() {
-  const tag = { song: 'This song', album: 'This album', artist: about ? about.artist : 'This artist' };
+  const tag = { song: 'this song', album: 'the album', artist: about ? about.artist : 'the artist' };
   // Number entries oldest-first, like pages in a book
   const order = [...list].sort((a, b) => a.created - b.created);
   const no = new Map(order.map((l, i) => [l.id, i + 1]));
-  $('#memCount').textContent = list.length ? `${list.length} ${list.length === 1 ? 'memory' : 'memories'}` : '';
+  $('#memCount').textContent = list.length ? `${list.length} so far` : '';
   const shown = showAll ? list : list.slice(0, SHOW);
   $('#mem').innerHTML = list.length ? shown.map(l => {
     const d = new Date(l.created * 1000);
-    return `<article class="mem">
-      <div class="no"><span>No. ${no.get(l.id)} · ${MON[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}</span><b>${esc(tag[l.match])}</b></div>
+    return `<article class="letter box"><span class="tape" aria-hidden="true"></span>
+      <div class="row"><span>No. ${no.get(l.id)} · ${MON[d.getMonth()]} ${d.getDate()}</span><b>${esc(tag[l.match])}</b></div>
       <p>${esc(l.body)}</p>
-      <div class="who">— ${esc(l.name || 'anonymous')}${l.match !== 'song' && l.song ? ` · on “${esc(l.song)}”` : ''}</div>
+      <div class="row"><span>— ${esc(l.name || 'anonymous')}${l.match !== 'song' && l.song ? ` · on “${esc(l.song)}”` : ''}</span></div>
     </article>`;
   }).join('') : `<p class="empty">No one has written about ${esc(about ? about.artist : 'this record')} yet. Yours would be the first page.</p>`;
   const more = $('#more');
   more.hidden = showAll || list.length <= SHOW;
-  more.textContent = `Read all ${list.length} →`;
+  more.textContent = `Read all ${list.length}`;
 }
 $('#more').addEventListener('click', () => { showAll = true; renderMem(); });
 
@@ -310,7 +282,7 @@ $('#more').addEventListener('click', () => { showAll = true; renderMem(); });
 async function poll() {
   let n;
   try { n = await get('/now'); connected = true; }
-  catch { if (connected !== false) { connected = false; renderNow(null); if (!about) renderWrite(); } return; }
+  catch { lastKey = null; if (connected !== false) { connected = false; renderNow(null); if (!about) renderWrite(); } return; }
   const key = [n.artist, n.song, n.album].join('|');
   if (key === lastKey) return;
   lastKey = key; renderNow(n);
