@@ -37,7 +37,7 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 | `DISCOGS_USER` | `andrewcrena` | |
 | `AUDD_TOKEN` | | AudD API token. Without it, recognition is off and you set records by hand |
 | `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
-| `STREAM_URL` | `ICECAST_URL` + `/stream.mp3` | What recognition listens to |
+| `STREAM_URL` | `/stream.aac`, else `/stream.mp3` | What recognition listens to |
 | `RECOGNIZE_EVERY` | `60` | Seconds between checks (each check is one AudD request) |
 | `DOCENT_PIN` | | Required for `/docent` |
 | `REQUIRE_APPROVAL` | `1` | `0` shows letters right away |
@@ -58,7 +58,7 @@ When you change `server/static/book.html` or `docent.html`, copy them to `letter
 
 ### One public address
 
-The service passes Icecast's `/stream.mp3`, `/stream.ogg` and `/status-json.xsl` through, so point ngrok at the service (port 8787) and the same address serves the stream and the letter book. `ICECAST_URL` (default `http://localhost:8000`) says where Icecast is.
+The service passes Icecast's `/stream.aac`, `/stream.mp3`, `/stream.ogg` and `/status-json.xsl` through, so point ngrok at the service (port 8787) and the same address serves the stream and the letter book. `ICECAST_URL` (default `http://localhost:8000`) says where Icecast is.
 
 ### Hooking up the radio page
 

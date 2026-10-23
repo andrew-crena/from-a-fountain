@@ -30,9 +30,10 @@ DISCOGS_USER = ENV('DISCOGS_USER', 'andrewcrena')
 DISCOGS_TOKEN = ENV('DISCOGS_TOKEN', '')
 AUDD_TOKEN = ENV('AUDD_TOKEN', '')
 ICECAST_URL = ENV('ICECAST_URL', 'http://localhost:8000').rstrip('/')
-STREAM_URL = ENV('STREAM_URL', ICECAST_URL + '/stream.mp3')
+# Recognition listens to the AAC mount, or the MP3 one if that's what BUTT is sending
+STREAM_URLS = [ENV('STREAM_URL')] if ENV('STREAM_URL') else [ICECAST_URL + '/stream.aac', ICECAST_URL + '/stream.mp3']
 # Icecast paths passed through, so one tunnel (ngrok -> this service) serves the stream and the letter book
-ICECAST_PATHS = re.compile(r'/(stream\.(mp3|ogg)|status-json\.xsl)')
+ICECAST_PATHS = re.compile(r'/(stream\.(aac|mp3|ogg)|status-json\.xsl)')
 RECOGNIZE_EVERY = int(ENV('RECOGNIZE_EVERY', '60'))
 SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '400000'))  # ~10 s of 320 kbps MP3
 DOCENT_PIN = ENV('DOCENT_PIN', '')
@@ -300,13 +301,14 @@ def set_now(n):
     log('now spinning:', n.get('artist'), '-', n.get('song'), f"({n.get('source')})")
 
 
-def audd_recognize(sample):
+def audd_recognize(sample, ctype='audio/mpeg'):
+    ext = {'audio/aac': 'aac', 'audio/aacp': 'aac', 'audio/ogg': 'ogg'}.get(ctype, 'mp3')
     boundary = uuid.uuid4().hex
     parts = []
     for k, v in (('api_token', AUDD_TOKEN), ('return', 'apple_music')):
         parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode())
-    parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="s.mp3"\r\n'
-                 f'Content-Type: audio/mpeg\r\n\r\n'.encode() + sample + b'\r\n')
+    parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="s.{ext}"\r\n'
+                 f'Content-Type: {ctype}\r\n\r\n'.encode() + sample + b'\r\n')
     parts.append(f'--{boundary}--\r\n'.encode())
     req = urllib.request.Request('https://api.audd.io/', data=b''.join(parts), headers={
         'Content-Type': 'multipart/form-data; boundary=' + boundary, 'User-Agent': UA})
@@ -318,15 +320,23 @@ def audd_recognize(sample):
 
 
 def grab_sample():
-    req = urllib.request.Request(STREAM_URL, headers={'User-Agent': UA, 'ngrok-skip-browser-warning': '1'})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        buf = b''
-        while len(buf) < SAMPLE_BYTES:
-            chunk = r.read(SAMPLE_BYTES - len(buf))
-            if not chunk:
-                break
-            buf += chunk
-    return buf
+    """About 10 s of whichever stream is live, with its content type."""
+    last = None
+    for url in STREAM_URLS:
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': UA, 'ngrok-skip-browser-warning': '1'})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                ctype = (r.headers.get('Content-Type') or 'audio/mpeg').split(';')[0].strip()
+                buf = b''
+                while len(buf) < SAMPLE_BYTES:
+                    chunk = r.read(SAMPLE_BYTES - len(buf))
+                    if not chunk:
+                        break
+                    buf += chunk
+            return buf, ctype
+        except urllib.error.HTTPError as e:
+            last = e  # that mount isn't live; try the next
+    raise last or RuntimeError('no stream')
 
 
 def recognizer():
@@ -336,7 +346,7 @@ def recognizer():
     while True:
         try:
             if now().get('source') != 'manual':
-                res = audd_recognize(grab_sample())
+                res = audd_recognize(*grab_sample())
                 cur = now()
                 if res and (norm(res.get('title')) != norm(cur.get('song')) or norm(res.get('artist')) != norm(cur.get('artist'))):
                     rel = find_in_crate(res.get('artist'), res.get('title'), res.get('album'))

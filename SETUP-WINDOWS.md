@@ -6,7 +6,7 @@ Four programs, in the order they connect:
 turntable → BUTT → Icecast (port 8000) → letter book service (port 8787) → ngrok → the internet
 ```
 
-The letter book service passes the stream through, so one ngrok address carries both the audio and the letter book. The site's links keep working: `https://malika-unflaky-loan.ngrok-free.dev/stream.mp3`.
+The letter book service passes the stream through, so one ngrok address carries both the audio and the letter book. The site plays `https://malika-unflaky-loan.ngrok-free.dev/stream.aac`.
 
 Set up each step and check it before moving on.
 
@@ -38,21 +38,27 @@ Set up each step and check it before moving on.
 1. Download BUTT for Windows from **danielnoethen.de/butt** and install it.
 2. Plug in your turntable's audio interface or preamp.
 3. Windows **Settings → Privacy & security → Microphone**: turn on **Let desktop apps access your microphone**. Without this, BUTT records silence.
-4. In BUTT, open **Settings**:
+4. Keep Windows from touching the sound. Open the classic **Sound** control panel (Start, type `mmsys.cpl`), go to the **Recording** tab, and open your turntable interface (it may be called *Microphone, USB Audio CODEC*):
+   - **Advanced:** note the **Default Format**, for example *2 channel, 16 bit, 48000 Hz*. BUTT's samplerate must match it.
+   - **Advanced** (or **Enhancements**): turn off **audio enhancements**, if the tab offers them.
+   - **Levels:** set it to about **75**, and adjust later in step 7.
+5. In BUTT, open **Settings**:
    - **Main → Server → ADD:**
      - Type **Icecast**
      - Address `127.0.0.1`, Port `8000`
      - Password: your source password
-     - Mountpoint `stream.mp3`, User `source`
+     - Mountpoint `stream.aac`, User `source`
    - **Audio:**
      - Device: your turntable interface
-     - Codec **MP3**, Bitrate **320k**, Samplerate **44100**
-5. In **Main**, tick **Start streaming after launch** if your BUTT has it, so the launcher's BUTT starts streaming by itself. Click **Save**.
-6. Close Settings and press **▶** (play) in BUTT.
+     - Channel mode **Stereo**
+     - Samplerate: **the same number as Windows' Default Format** (usually **48000Hz**)
+     - Streaming codec **AAC**, Bitrate **256k**. If the gear icon next to the codec offers a profile, pick **AAC-LC**. The other profiles (HE-AAC or AAC+) are meant for low bitrates and sound worse at 256k.
+6. In **Main**, tick **Start streaming after launch** if your BUTT has it, so the launcher's BUTT starts streaming by itself. Click **Save**.
+7. Press **▶** (play) and play the loudest part of a record. The meters should peak around **-6 dB** and never sit in the yellow and red near 0. If they do, the sound is clipping: lower the Windows **Levels** from step 4, or your preamp's gain.
 
-**Check:** http://localhost:8000 now lists `/stream.mp3`. Open http://localhost:8000/stream.mp3 and you should hear the record.
+**Check:** http://localhost:8000 now lists `/stream.aac`. Open http://localhost:8000/stream.aac and you should hear the record.
 
-Optional FLAC stream: the woodgrain radio page in this repo can play lossless audio from `/stream.ogg`. The live site only uses MP3, so you can skip this. If you want it, run a second BUTT with Codec **FLAC** and Mountpoint `stream.ogg`.
+The site plays `/stream.aac`. The letter book's recognition listens to `/stream.aac`, or `/stream.mp3` if that's what is live.
 
 ## 3. Python and the letter book
 
@@ -90,7 +96,7 @@ Double-click **`server\start-fountain.bat`**. It starts all four programs in ord
 If a step prints `NOT FOUND`, that program is installed somewhere the launcher doesn't look. Start it by hand and run the launcher again; it will skip what's already up.
 
 **Checks:**
-- https://malika-unflaky-loan.ngrok-free.dev/stream.mp3 plays.
+- https://malika-unflaky-loan.ngrok-free.dev/stream.aac plays.
 - https://malika-unflaky-loan.ngrok-free.dev/api/now shows what's spinning, or `{"source": "none"}`.
 - https://malika-unflaky-loan.ngrok-free.dev/docent asks for your PIN.
 - andrew-crena.github.io plays when you tap **Listen**, and the **Letter book** page shows what's spinning.
