@@ -15,6 +15,17 @@ set "SITE=https://andrew-crena.github.io/fountain/"
 set "MOUNT=stream.aac"
 set "PORT=8787"
 
+if exist "%~dp0fountain.py" goto placeok
+echo This launcher has to live in the from-a-fountain\server folder, next to
+echo fountain.py and fountain.env. Right now it is in:
+echo      %~dp0
+echo.
+echo Move it into the server folder (replace the old start-fountain.bat there),
+echo then use your desktop shortcut as before.
+pause
+exit /b 1
+:placeok
+
 if exist fountain.env goto loadenv
 echo NOTE: no fountain.env yet. The stream will still go out, but record
 echo recognition and the docent page need it. See SETUP-WINDOWS.md, step 3.
@@ -41,16 +52,32 @@ call :findexe ICE "%PF86%\Icecast\icecast.exe"
 call :findexe ICE "C:\Icecast\bin\icecast.exe"
 call :findexe ICE "C:\Icecast\icecast.exe"
 if not defined ICE goto icemissing
-REM icecast.xml sits beside the exe, or one level up when the exe is in bin\
+REM The install folder holds web\ and admin\, which icecast.xml refers to with
+REM relative paths, so Icecast always runs from there.
 set "ICEDIR="
-call :findxml ICEDIR "%PF%\Icecast"
-call :findxml ICEDIR "%PF86%\Icecast"
-call :findxml ICEDIR "C:\Icecast"
-if not defined ICEDIR goto icenoxml
-REM Launch the way the "Run Icecast (Console)" shortcut does: its icecast.bat, from the install folder
+call :findroot ICEDIR "%PF%\Icecast"
+call :findroot ICEDIR "%PF86%\Icecast"
+call :findroot ICEDIR "C:\Icecast"
+REM The settings file: ICECAST_XML in fountain.env if set, else the install
+REM folder, else Documents (where Notepad saves it when Program Files is locked).
+set "XML="
+if defined ICECAST_XML call :findfile XML "%ICECAST_XML%"
+call :findfile XML "%ICEDIR%\icecast.xml"
+call :findfile XML "%ICEDIR%\etc\icecast.xml"
+call :findfile XML "%OneDriveCommercial%\Documents\icecast.xml"
+call :findfile XML "%OneDrive%\Documents\icecast.xml"
+call :findfile XML "%USERPROFILE%\OneDrive\Documents\icecast.xml"
+call :findfile XML "%USERPROFILE%\Documents\icecast.xml"
+if not defined XML goto icenoxml
+echo      settings: %XML%
 pushd "%ICEDIR%"
-if exist "%ICEDIR%\icecast.bat" start "Icecast" /min "%ICEDIR%\icecast.bat"
-if not exist "%ICEDIR%\icecast.bat" start "Icecast" /min "%ICE%" -c icecast.xml
+REM Settings in the install folder: start it the way the Start-menu shortcut does.
+if /i "%XML%"=="%ICEDIR%\icecast.xml" if exist "%ICEDIR%\icecast.bat" goto icebat
+start "Icecast" /min "%ICE%" -c "%XML%"
+goto icelaunched
+:icebat
+start "Icecast" /min "%ICEDIR%\icecast.bat"
+:icelaunched
 popd
 echo      starting...
 call :waitport 8000 15
@@ -62,7 +89,9 @@ goto icedone
 echo      NOT FOUND. Start Icecast from the Start menu, then run this again.
 goto stop
 :icenoxml
-echo      Found icecast.exe but not icecast.xml. Start Icecast from the Start menu, then run this again.
+echo      Found Icecast but not its settings file, icecast.xml.
+echo      Add a line to fountain.env saying where it is, for example:
+echo        ICECAST_XML=C:\Users\you\Documents\icecast.xml
 goto stop
 :icefail
 echo      PROBLEM: port 8000 never opened. Look at the Icecast window for an error
@@ -202,9 +231,16 @@ pause
 exit /b 1
 
 REM ======================= helpers =======================
-:findxml
+:findroot
+REM an Icecast install folder: has icecast.exe directly or in bin\
 if defined %1 exit /b
-if exist "%~2\icecast.xml" set "%1=%~2"
+if exist "%~2\bin\icecast.exe" set "%1=%~2"
+if exist "%~2\icecast.exe" set "%1=%~2"
+exit /b
+
+:findfile
+if defined %1 exit /b
+if exist "%~2" set "%1=%~2"
 exit /b
 
 :findexe
