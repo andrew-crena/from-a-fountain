@@ -89,23 +89,31 @@ The site plays `/stream.aac`. The letter book's recognition listens to `/stream.
 
 ## 5. Start everything
 
-Double-click **`server\start-fountain.bat`**. It starts all four programs in order — Icecast, BUTT, ngrok, then the letter book — and skips any that are already running. If BUTT doesn't start streaming on its own, press ▶ in it.
+Double-click **`server\start-fountain.bat`**. It goes on air in order and checks each link before moving on:
+
+1. **Icecast**: starts it and waits for port 8000.
+2. **BUTT**: opens it and waits until Icecast actually receives `/stream.aac`. If BUTT hasn't started streaming on its own, the launcher asks it to; if that doesn't work either, it tells you to press ▶ and waits up to two minutes.
+3. **Letter book service**: starts it (it carries the stream to ngrok) and waits for port 8787.
+4. **ngrok**: starts the tunnel and waits until `malika-unflaky-loan.ngrok-free.dev` is up.
+5. **On air check**: requests the stream from the public address, the way a listener would, then opens **andrew-crena.github.io/fountain/** in your browser.
+
+Each program runs in its own minimised window. Anything already running is left alone, so it is safe to double-click twice. If a step fails, the launcher stops there and says what to check; fix it and run it again.
 
 **If Windows blocks it** ("Windows protected your PC", or nothing happens): right-click the file, choose **Properties**, tick **Unblock** at the bottom, click OK, then double-click again. Windows marks files that arrived in a download, and unblocking clears that mark.
 
 If a step prints `NOT FOUND`, that program is installed somewhere the launcher doesn't look. Start it by hand and run the launcher again; it will skip what's already up.
 
-**Checks:**
+**To go off air**, double-click **`server\stop-fountain.bat`**. It closes BUTT, ngrok, the letter book service and Icecast. Letters are saved as they are written.
+
+**Checks** (the launcher does the first one for you):
 - https://malika-unflaky-loan.ngrok-free.dev/stream.aac plays.
 - https://malika-unflaky-loan.ngrok-free.dev/api/now shows what's spinning, or `{"source": "none"}`.
 - https://malika-unflaky-loan.ngrok-free.dev/docent asks for your PIN.
-- andrew-crena.github.io plays when you tap **Listen**, and the **Letter book** page shows what's spinning.
+- andrew-crena.github.io/fountain/ plays when you tap **Listen**, and the **Letter book** page shows what's spinning.
 
 ## Every set after this
 
-Double-click `start-fountain.bat`. It skips anything already running, so it is safe to run twice.
-
-To stop, close all four windows.
+Double-click `start-fountain.bat`. When the window says **ON AIR**, you are live. Afterwards, double-click `stop-fountain.bat`.
 
 ## Back up the book
 
