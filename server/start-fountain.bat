@@ -15,25 +15,35 @@ set "SITE=https://andrew-crena.github.io/fountain/"
 set "MOUNT=stream.aac"
 set "PORT=8787"
 
-if exist "%~dp0fountain.py" goto placeok
-echo This launcher has to live in the from-a-fountain\server folder, next to
-echo fountain.py and fountain.env. Right now it is in:
-echo      %~dp0
-echo.
-echo Move it into the server folder (replace the old start-fountain.bat there),
-echo then use your desktop shortcut as before.
-pause
-exit /b 1
-:placeok
+REM This file can sit anywhere (the Desktop is fine). It looks for the letter
+REM book (from-a-fountain\server) next to itself, then in the usual places.
+set "SERVER="
+call :finddir SERVER "%~dp0"
+call :finddir SERVER "%~dp0server"
+call :finddir SERVER "%USERPROFILE%\from-a-fountain\server"
+call :finddir SERVER "%USERPROFILE%\Documents\from-a-fountain\server"
+call :finddir SERVER "%USERPROFILE%\Documents\GitHub\from-a-fountain\server"
+call :finddir SERVER "%OneDriveCommercial%\Documents\from-a-fountain\server"
+call :finddir SERVER "%OneDriveCommercial%\Documents\GitHub\from-a-fountain\server"
+call :finddir SERVER "%OneDriveCommercial%\Desktop\from-a-fountain\server"
+call :finddir SERVER "%OneDrive%\Documents\from-a-fountain\server"
+call :finddir SERVER "%OneDrive%\Desktop\from-a-fountain\server"
+call :finddir SERVER "%USERPROFILE%\Desktop\from-a-fountain\server"
+call :finddir SERVER "%USERPROFILE%\Downloads\from-a-fountain-main\server"
+call :finddir SERVER "%USERPROFILE%\Downloads\from-a-fountain\server"
+if defined SERVER cd /d "%SERVER%"
+if not defined SERVER goto envdone
 
 if exist fountain.env goto loadenv
-echo NOTE: no fountain.env yet. The stream will still go out, but record
-echo recognition and the docent page need it. See SETUP-WINDOWS.md, step 3.
+echo NOTE: no fountain.env in %SERVER%. The stream will still go out, but
+echo record recognition and the docent page need it. See SETUP-WINDOWS.md, step 3.
 goto envdone
 :loadenv
 for /f "usebackq eol=# tokens=1,* delims==" %%a in ("fountain.env") do set "%%a=%%b"
 :envdone
+REM The website plays NGROK_DOMAIN first, then NGROK_ALT_DOMAIN (your earlier address).
 if not defined NGROK_DOMAIN set "NGROK_DOMAIN=malika-unflaky-loan.ngrok-free.dev"
+if not defined NGROK_ALT_DOMAIN set "NGROK_ALT_DOMAIN=cuddly-doe-adversely.ngrok-free.app"
 if defined FOUNTAIN_PORT set "PORT=%FOUNTAIN_PORT%"
 
 where curl >nul 2>nul
@@ -107,12 +117,24 @@ call :findexe BUTT "%PF%\butt\butt.exe"
 call :findexe BUTT "%PF86%\butt\butt.exe"
 call :findexe BUTT "%LAD%\butt\butt.exe"
 call :findexe BUTT "%LAD%\Programs\butt\butt.exe"
+set "BUTTLNK="
+call :findexe BUTTLNK "%OneDriveCommercial%\Desktop\butt.lnk"
+call :findexe BUTTLNK "%OneDrive%\Desktop\butt.lnk"
+call :findexe BUTTLNK "%USERPROFILE%\Desktop\butt.lnk"
+call :findexe BUTTLNK "%PUBLIC%\Desktop\butt.lnk"
 tasklist /fi "imagename eq butt.exe" | find /i "butt.exe" >nul
 if not errorlevel 1 goto buttopen
-if not defined BUTT goto buttmissing
+if defined BUTT goto buttexe
+if defined BUTTLNK goto buttlnk
+goto buttmissing
+:buttexe
 REM Opened without -s: on its own, -s makes BUTT quit. "Start streaming after launch" in BUTT's settings starts it.
 start "BUTT" "%BUTT%"
 echo      opened
+goto buttwait
+:buttlnk
+start "" "%BUTTLNK%"
+echo      opened (from your desktop shortcut)
 goto buttwait
 :buttopen
 echo      already open
@@ -145,9 +167,11 @@ echo      OK  /%MOUNT% is live in Icecast
 
 REM ===================================================================
 echo.
-echo === 3 of 5   Letter book service  (passes the stream through) ===
+echo === 3 of 5   Letter book service  (now playing + letter book) ===
+set "TPORT=%PORT%"
 call :listening %PORT%
 if not errorlevel 1 goto bookup
+if not defined SERVER goto nobook
 where py >nul 2>nul
 if errorlevel 1 goto nopy
 start "Letter book" /min cmd /k py fountain.py
@@ -157,39 +181,65 @@ if errorlevel 1 goto bookfail
 :bookup
 echo      OK  http://localhost:%PORT%
 goto bookdone
+:nobook
+echo      Not set up on this computer (no from-a-fountain\server folder found).
+goto streamonly
 :nopy
-echo      PROBLEM: Python isn't installed (no "py" command). SETUP-WINDOWS.md, step 3.
-goto stop
+echo      Python isn't installed (no "py" command), so the letter book is skipped.
+goto streamonly
 :bookfail
-echo      PROBLEM: the service didn't start. Look at the "Letter book" window for the error.
-goto stop
+echo      The service didn't start; see the "Letter book" window. Skipping it.
+:streamonly
+echo      Streaming straight from Icecast instead. The music still reaches the site;
+echo      "now playing" and the letter book are off until the service runs.
+set "TPORT=8000"
 :bookdone
 
 REM ===================================================================
 echo.
 echo === 4 of 5   ngrok  (the public address) ===
+set "NGROKEXE="
+for /f "delims=" %%n in ('where ngrok 2^>nul') do if not defined NGROKEXE set "NGROKEXE=%%n"
+call :findexe NGROKEXE "%LAD%\Microsoft\WindowsApps\ngrok.exe"
+if not defined NGROKEXE goto nongrok
+set "ACTIVE="
 tasklist /fi "imagename eq ngrok.exe" | find /i "ngrok.exe" >nul
-if not errorlevel 1 goto ngrokrunning
-where ngrok >nul 2>nul
-if errorlevel 1 goto nongrok
-start "ngrok" /min ngrok http --domain=%NGROK_DOMAIN% %PORT%
-echo      starting...
-goto ngrokwait
-:ngrokrunning
+if errorlevel 1 goto ngrokstart
 echo      already running
-:ngrokwait
+if defined NOCURL set "ACTIVE=%NGROK_DOMAIN%"
 if defined NOCURL goto ngrokdone
-call :waittunnel 20
-if errorlevel 1 goto ngrokfail
-echo      OK  https://%NGROK_DOMAIN%
+call :waittunnel %NGROK_DOMAIN% 3
+if not errorlevel 1 set "ACTIVE=%NGROK_DOMAIN%"
+if defined ACTIVE goto ngrokok
+call :waittunnel %NGROK_ALT_DOMAIN% 3
+if not errorlevel 1 set "ACTIVE=%NGROK_ALT_DOMAIN%"
+if defined ACTIVE goto ngrokok
+echo      ...but not on either address. Restarting it.
+taskkill /im ngrok.exe /f >nul 2>nul
+:ngrokstart
+call :tunnel %NGROK_DOMAIN%
+if defined NOCURL set "ACTIVE=%NGROK_DOMAIN%"
+if defined NOCURL goto ngrokdone
+call :waittunnel %NGROK_DOMAIN% 15
+if not errorlevel 1 set "ACTIVE=%NGROK_DOMAIN%"
+if defined ACTIVE goto ngrokok
+echo      %NGROK_DOMAIN% didn't come up; trying your other address...
+taskkill /im ngrok.exe /f >nul 2>nul
+call :tunnel %NGROK_ALT_DOMAIN%
+call :waittunnel %NGROK_ALT_DOMAIN% 15
+if not errorlevel 1 set "ACTIVE=%NGROK_ALT_DOMAIN%"
+if defined ACTIVE goto ngrokok
+goto ngrokfail
+:ngrokok
+echo      OK  https://%ACTIVE%
 goto ngrokdone
 :nongrok
-echo      PROBLEM: ngrok isn't installed or isn't on PATH. SETUP-WINDOWS.md, step 4.
+echo      PROBLEM: ngrok isn't installed. SETUP-WINDOWS.md, step 4.
 goto stop
 :ngrokfail
-echo      PROBLEM: the tunnel for %NGROK_DOMAIN% didn't come up. Look at the ngrok window.
-echo      "ERR_NGROK_108" or "already online" means ngrok is running elsewhere with this address (close it);
-echo      "authentication failed" means: ngrok config add-authtoken YOUR_TOKEN
+echo      PROBLEM: neither ngrok address came up. Look at the "ngrok" window:
+echo      "authentication failed" means:  ngrok config add-authtoken YOUR_TOKEN
+echo      "already online" means ngrok is running on another computer with this address.
 goto stop
 :ngrokdone
 
@@ -198,13 +248,13 @@ echo.
 echo === 5 of 5   On air check  (from the internet, as listeners hear it) ===
 if defined NOCURL goto opensite
 set "CODE="
-for /f %%c in ('curl -s -o nul -m 6 -H "ngrok-skip-browser-warning: 1" -w "%%{http_code}" "https://%NGROK_DOMAIN%/%MOUNT%"') do set "CODE=%%c"
+for /f %%c in ('curl -s -o nul -m 6 -H "ngrok-skip-browser-warning: 1" -w "%%{http_code}" "https://%ACTIVE%/%MOUNT%"') do set "CODE=%%c"
 if "%CODE%"=="200" goto onair
-echo      PROBLEM: https://%NGROK_DOMAIN%/%MOUNT% answered "%CODE%" instead of 200.
+echo      PROBLEM: https://%ACTIVE%/%MOUNT% answered "%CODE%" instead of 200.
 echo      Opening the page anyway so you can try it.
 goto opensite
 :onair
-echo      OK  the stream plays at https://%NGROK_DOMAIN%/%MOUNT%
+echo      OK  the stream plays at https://%ACTIVE%/%MOUNT%
 
 :opensite
 echo.
@@ -212,7 +262,8 @@ echo Opening %SITE%
 start "" "%SITE%"
 echo.
 echo ============================================================
-echo   ON AIR.  Listeners: %SITE%
+echo   ON AIR at https://%ACTIVE%
+echo   Listeners: %SITE%
 echo   Letter book: https://andrew-crena.github.io/letters/
 echo   Docent:      http://localhost:%PORT%/docent
 echo.
@@ -236,6 +287,12 @@ REM an Icecast install folder: has icecast.exe directly or in bin\
 if defined %1 exit /b
 if exist "%~2\bin\icecast.exe" set "%1=%~2"
 if exist "%~2\icecast.exe" set "%1=%~2"
+exit /b
+
+:finddir
+REM a from-a-fountain\server folder: has fountain.py
+if defined %1 exit /b
+if exist "%~2\fountain.py" set "%1=%~f2"
 exit /b
 
 :findfile
@@ -275,13 +332,19 @@ if %_t% geq %1 exit /b 1
 timeout /t 2 /nobreak >nul
 goto waitmount_loop
 
+:tunnel
+REM start ngrok for domain %1 in its own window, kept open so errors stay readable
+echo      starting https://%1 ...
+start "ngrok" /min cmd /k ""%NGROKEXE%" http --domain=%1 %TPORT%"
+exit /b
+
 :waittunnel
-REM wait up to %1 seconds for ngrok's local API to report the tunnel
+REM wait up to %2 seconds for ngrok's local API to report a tunnel on domain %1
 set /a _t=0
 :waittunnel_loop
-curl -s -m 2 http://127.0.0.1:4040/api/tunnels 2>nul | find /i "%NGROK_DOMAIN%" >nul
+curl -s -m 2 http://127.0.0.1:4040/api/tunnels 2>nul | find /i "%1" >nul
 if not errorlevel 1 exit /b 0
 set /a _t+=1
-if %_t% geq %1 exit /b 1
+if %_t% geq %2 exit /b 1
 timeout /t 1 /nobreak >nul
 goto waittunnel_loop

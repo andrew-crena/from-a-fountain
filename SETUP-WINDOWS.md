@@ -89,12 +89,12 @@ The site plays `/stream.aac`. The letter book's recognition listens to `/stream.
 
 ## 5. Start everything
 
-Double-click **`server\start-fountain.bat`**. It goes on air in order and checks each link before moving on:
+Double-click **`server\start-fountain.bat`**, or a copy of it on your Desktop: it finds the `server` folder by itself. It goes on air in order and checks each link before moving on:
 
 1. **Icecast**: starts it and waits for port 8000.
 2. **BUTT**: opens it and waits until Icecast actually receives `/stream.aac`. If BUTT hasn't started streaming on its own, the launcher asks it to; if that doesn't work either, it tells you to press ▶ and waits up to two minutes.
-3. **Letter book service**: starts it (it carries the stream to ngrok) and waits for port 8787.
-4. **ngrok**: starts the tunnel and waits until `malika-unflaky-loan.ngrok-free.dev` is up.
+3. **Letter book service**: starts it and waits for port 8787. If it isn't set up on this computer (no Python or no `server` folder), the launcher skips it and sends the stream straight from Icecast; the music still reaches the site, without "now playing" or the letter book.
+4. **ngrok**: starts the tunnel on `malika-unflaky-loan.ngrok-free.dev`, or, if your ngrok sign-in can't use that address, on `cuddly-doe-adversely.ngrok-free.app`. The website tries both.
 5. **On air check**: requests the stream from the public address, the way a listener would, then opens **andrew-crena.github.io/fountain/** in your browser.
 
 Each program runs in its own minimised window. Anything already running is left alone, so it is safe to double-click twice. If a step fails, the launcher stops there and says what to check; fix it and run it again.
