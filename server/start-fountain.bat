@@ -13,6 +13,7 @@ set "PF86=%ProgramFiles(x86)%"
 set "LAD=%LocalAppData%"
 set "SITE=https://andrew-crena.github.io/fountain/"
 set "MOUNT=stream.aac"
+REM BUTT may send AAC (/stream.aac) or MP3 (/stream.mp3); either works. MOUNT becomes whichever is live.
 set "PORT=8787"
 
 REM This file can sit anywhere (the Desktop is fine). It looks for the letter
@@ -143,7 +144,7 @@ goto buttwait
 echo      NOT FOUND where expected. Open BUTT yourself; this window will wait for it.
 :buttwait
 if defined NOCURL goto buttnocheck
-echo      waiting for the /%MOUNT% stream to reach Icecast...
+echo      waiting for BUTT's stream (/stream.aac or /stream.mp3) to reach Icecast...
 call :waitmount 12
 if not errorlevel 1 goto buttlive
 REM Not streaming yet. A running BUTT accepts "butt -s" as "start streaming" (BUTT 0.1.30 and later).
@@ -153,10 +154,11 @@ if not errorlevel 1 goto buttlive
 echo.
 echo      ^>^>^> Press PLAY in the BUTT window now. ^<^<^<
 echo      (Waiting up to 2 minutes. If BUTT shows a connection error, check the
-echo       source password and the mountpoint "%MOUNT%" in its server settings.)
+echo       source password, and set the mountpoint to "stream.mp3" in its server settings.)
 call :waitmount 120
 if not errorlevel 1 goto buttlive
-echo      PROBLEM: Icecast never received /%MOUNT%. Check BUTT, then run this again.
+echo      PROBLEM: Icecast never received /stream.aac or /stream.mp3. In BUTT: Settings,
+echo      Main, Server, Edit: the mountpoint must be stream.mp3 (or stream.aac).
 goto stop
 :buttnocheck
 echo      Make sure play is pressed in BUTT.
@@ -325,7 +327,11 @@ goto waitport_loop
 REM wait up to %1 seconds for Icecast to list the mount
 set /a _t=0
 :waitmount_loop
-curl -s -m 2 http://localhost:8000/status-json.xsl 2>nul | find /i "/%MOUNT%" >nul
+curl -s -m 2 http://localhost:8000/status-json.xsl 2>nul | find /i "/stream.aac" >nul
+if not errorlevel 1 set "MOUNT=stream.aac"
+if not errorlevel 1 exit /b 0
+curl -s -m 2 http://localhost:8000/status-json.xsl 2>nul | find /i "/stream.mp3" >nul
+if not errorlevel 1 set "MOUNT=stream.mp3"
 if not errorlevel 1 exit /b 0
 set /a _t+=2
 if %_t% geq %1 exit /b 1
