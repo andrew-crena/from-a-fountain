@@ -47,12 +47,12 @@ Set up each step and check it before moving on.
      - Type **Icecast**
      - Address `127.0.0.1`, Port `8000`
      - Password: your source password
-     - Mountpoint `stream.aac`, User `source`
+     - Mountpoint `stream.aac` (or `stream.mp3` if you stream MP3), User `source`
    - **Audio:**
      - Device: your turntable interface
      - Channel mode **Stereo**
      - Samplerate: **the same number as Windows' Default Format** (usually **48000Hz**)
-     - Streaming codec **AAC**, Bitrate **256k**. If the gear icon next to the codec offers a profile, pick **AAC-LC**. The other profiles (HE-AAC or AAC+) are meant for low bitrates and sound worse at 256k.
+     - Streaming codec **AAC**, Bitrate **256k**. If BUTT says *Could not find aac library*, either add AAC support as its manual describes, or choose **MP3** at **320k** with the mountpoint `stream.mp3`; the launcher and the site accept either. If the gear icon next to the codec offers a profile, pick **AAC-LC**. The other profiles (HE-AAC or AAC+) are meant for low bitrates and sound worse at 256k.
 6. In **Main**, tick **Start streaming after launch** if your BUTT has it, so the launcher's BUTT starts streaming by itself. Click **Save**.
 7. Press **▶** (play) and play the loudest part of a record. The meters should peak around **-6 dB** and never sit in the yellow and red near 0. If they do, the sound is clipping: lower the Windows **Levels** from step 4, or your preamp's gain.
 
