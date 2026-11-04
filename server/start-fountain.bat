@@ -201,9 +201,25 @@ REM ===================================================================
 echo.
 echo === 4 of 5   ngrok  (the public address) ===
 set "NGROKEXE="
-for /f "delims=" %%n in ('where ngrok 2^>nul') do if not defined NGROKEXE set "NGROKEXE=%%n"
-call :findexe NGROKEXE "%LAD%\Microsoft\WindowsApps\ngrok.exe"
+REM Each candidate is tried by running "ngrok version": Store/winget shortcuts
+REM in WindowsApps run fine but can look missing to a plain file check.
+if defined NGROK_EXE call :tryngrok "%NGROK_EXE%"
+call :tryngrok "ngrok"
+call :tryngrok "%~dp0ngrok.exe"
+call :tryngrok "%LAD%\Microsoft\WindowsApps\ngrok.exe"
+call :tryngrok "%LAD%\Microsoft\WinGet\Links\ngrok.exe"
+call :tryngrok "%PF%\ngrok\ngrok.exe"
+call :tryngrok "%USERPROFILE%\scoop\shims\ngrok.exe"
+call :tryngrok "C:\ProgramData\chocolatey\bin\ngrok.exe"
+call :tryngrok "C:\ngrok\ngrok.exe"
+call :tryngrok "%OneDriveCommercial%\Desktop\ngrok.exe"
+call :tryngrok "%OneDrive%\Desktop\ngrok.exe"
+call :tryngrok "%USERPROFILE%\Desktop\ngrok.exe"
+call :tryngrok "%USERPROFILE%\Downloads\ngrok.exe"
+if not defined NGROKEXE for /d %%d in ("%LAD%\Microsoft\WinGet\Packages\Ngrok.Ngrok*") do call :tryngrok "%%~d\ngrok.exe"
+if not defined NGROKEXE for /f "delims=" %%n in ('where /r "%USERPROFILE%\Downloads" ngrok.exe 2^>nul') do call :tryngrok "%%n"
 if not defined NGROKEXE goto nongrok
+echo      using %NGROKEXE%
 set "ACTIVE="
 tasklist /fi "imagename eq ngrok.exe" | find /i "ngrok.exe" >nul
 if errorlevel 1 goto ngrokstart
@@ -236,7 +252,11 @@ goto ngrokfail
 echo      OK  https://%ACTIVE%
 goto ngrokdone
 :nongrok
-echo      PROBLEM: ngrok isn't installed. SETUP-WINDOWS.md, step 4.
+echo      PROBLEM: can't find ngrok on this computer.
+echo      Easiest fix: put ngrok.exe in the same folder as this launcher
+echo      (download it from ngrok.com/download), or install it with:
+echo          winget install ngrok.ngrok
+echo      then run this again.
 goto stop
 :ngrokfail
 echo      PROBLEM: neither ngrok address came up. Look at the "ngrok" window:
@@ -289,6 +309,14 @@ REM an Icecast install folder: has icecast.exe directly or in bin\
 if defined %1 exit /b
 if exist "%~2\bin\icecast.exe" set "%1=%~2"
 if exist "%~2\icecast.exe" set "%1=%~2"
+exit /b
+
+:tryngrok
+REM use %1 as ngrok if it runs
+if defined NGROKEXE exit /b
+"%~1" version >nul 2>nul
+if errorlevel 1 exit /b
+set "NGROKEXE=%~1"
 exit /b
 
 :finddir
