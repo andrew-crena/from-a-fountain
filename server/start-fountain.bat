@@ -224,6 +224,16 @@ set "ACTIVE="
 tasklist /fi "imagename eq ngrok.exe" | find /i "ngrok.exe" >nul
 if errorlevel 1 goto ngrokstart
 echo      already running
+REM A tunnel left from an earlier run can point at the wrong port (8000, the
+REM stream only, when the letter book was skipped). Keep it only if it forwards
+REM to %TPORT%; ngrok's local API lists where each tunnel goes.
+if defined NOCURL goto ngrokreuse
+curl -s -m 3 http://127.0.0.1:4040/api/tunnels | find "localhost:%TPORT%" >nul
+if not errorlevel 1 goto ngrokreuse
+echo      ...but it points at a different port. Restarting it.
+taskkill /im ngrok.exe /f >nul 2>nul
+goto ngrokstart
+:ngrokreuse
 if defined NOCURL set "ACTIVE=%NGROK_DOMAIN%"
 if defined NOCURL goto ngrokdone
 call :waittunnel %NGROK_DOMAIN% 3
