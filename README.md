@@ -12,7 +12,11 @@ DISCOGS_TOKEN=...  AUDD_TOKEN=...  DOCENT_PIN=...  python3 server/fountain.py
 
 It then:
 
-- **Recognizes the record.** About every 60 s it grabs ~10 s of the MP3 stream and asks AudD what it is.
+- **Recognizes the record.** It grabs ~10 s of the stream and asks AudD what it is, as rarely as it can:
+  - after a match, it waits until that song should end (AudD says where in the song the sample was; Discogs or Apple Music give the length), then checks the next one, so about one request per song;
+  - with no match (silence, between records) it backs off to 1, 2, then 4 minutes;
+  - when nobody has the site open and nobody is on the stream, it makes no requests at all, and checks as soon as someone arrives;
+  - optionally, `AUDD_DAILY_LIMIT` caps requests per day.
 - **Matches it to your Discogs crate** (`andrew-crena`), so the page gets the right pressing: cover, label, year, where it was recorded, and the credited players.
 - **Serves the letter book** at `/`: what's spinning, a prompt to write a memory about the song, album, or artist, and past letters, closest match first (same song → same album → same artist). People can also pick any record, playing or not.
 - **Serves the docent page** at `/docent` (needs the PIN): set the record by hand when recognition misses (this pauses recognition until you tap "Back to automatic") and approve letters before they show.
@@ -38,7 +42,8 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 | `AUDD_TOKEN` | | AudD API token. Without it, recognition is off and you set records by hand |
 | `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
 | `STREAM_URL` | `/stream.aac`, else `/stream.mp3` | What recognition listens to |
-| `RECOGNIZE_EVERY` | `60` | Seconds between checks (each check is one AudD request) |
+| `RECOGNIZE_EVERY` | `180` | Seconds between checks when a song's length is unknown |
+| `AUDD_DAILY_LIMIT` | `0` | Most AudD requests per day; `0` for no cap. The day's count is in the log |
 | `DOCENT_PIN` | | Required for `/docent` |
 | `REQUIRE_APPROVAL` | `1` | `0` shows letters right away |
 | `FOUNTAIN_PORT` | `8787` | |
