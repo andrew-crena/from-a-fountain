@@ -34,7 +34,9 @@ ICECAST_URL = ENV('ICECAST_URL', 'http://localhost:8000').rstrip('/')
 STREAM_URLS = [ENV('STREAM_URL')] if ENV('STREAM_URL') else [ICECAST_URL + '/stream.aac', ICECAST_URL + '/stream.mp3']
 # Icecast paths passed through, so one tunnel (ngrok -> this service) serves the stream and the letter book
 ICECAST_PATHS = re.compile(r'/(stream\.(aac|mp3|ogg)|status-json\.xsl)')
-RECOGNIZE_EVERY = int(ENV('RECOGNIZE_EVERY', '60'))
+RECOGNIZE_EVERY = int(ENV('RECOGNIZE_EVERY', '180'))  # fallback gap when a song's length is unknown
+AUDD_DAILY_LIMIT = int(ENV('AUDD_DAILY_LIMIT', '0'))  # 0 = no cap
+DEMAND_WINDOW = 120  # a page asked "what's playing" this recently, so someone is looking
 SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '400000'))  # ~10 s of 320 kbps MP3
 DOCENT_PIN = ENV('DOCENT_PIN', '')
 REQUIRE_APPROVAL = ENV('REQUIRE_APPROVAL', '1') != '0'
@@ -301,6 +303,79 @@ def set_now(n):
     log('now spinning:', n.get('artist'), '-', n.get('song'), f"({n.get('source')})")
 
 
+# ---------- when to ask AudD ----------
+# Each AudD request costs quota, so ask only when the answer can change and
+# someone is there to see it:
+#  - after a match, wait until that song should end (AudD's timecode gives
+#    the position, Discogs or Apple Music the length), then check the next one;
+#  - no match (silence, talking, between records): back off 1, 2, 4 minutes;
+#  - nobody on the pages or the stream: don't ask at all, and check as soon
+#    as someone arrives.
+wake = threading.Event()
+demand = {'seen': 0.0, 'listeners': 0}
+
+
+def wanted():
+    return demand['listeners'] > 0 or time.time() - demand['seen'] < DEMAND_WINDOW
+
+
+def note_demand(listener=0):
+    """A page polled /api/now (listener=0) or a stream listener came or went (+1/-1)."""
+    idle = not wanted()
+    with lock:
+        demand['listeners'] = max(0, demand['listeners'] + listener)
+    if listener >= 0:
+        demand['seen'] = time.time()
+    if idle and wanted():
+        wake.set()
+
+
+def secs(s):
+    """'5:37', '05:37' or '1:02:03' -> seconds; None if it isn't a time."""
+    m = re.fullmatch(r'\s*(?:(\d+):)?(\d+):(\d\d)\s*', str(s or ''))
+    if not m:
+        return None
+    h, mi, se = m.groups()
+    return int(h or 0) * 3600 + int(mi) * 60 + int(se)
+
+
+def track_length(rel, title, res):
+    """Length of the playing track: your pressing on Discogs first, then Apple Music."""
+    if rel:
+        t = next((t for t in tracks_of(rel) if norm(t['title']) == norm(title)), None)
+        d = secs((t or {}).get('duration'))
+        if d:
+            return d
+    ms = ((res or {}).get('apple_music') or {}).get('durationInMillis')
+    return ms / 1000 if ms else None
+
+
+def wait_after(res, length, sampled_at, misses):
+    """Seconds until the next AudD request."""
+    if not res:
+        return min(240, 60 * 2 ** max(0, misses - 1))
+    pos = secs(res.get('timecode'))
+    if length and pos is not None and length > pos:
+        # the sample started `pos` into the song; check ~12 s into the next one
+        return max(20, min(720, sampled_at + (length - pos) + 12 - time.time()))
+    return RECOGNIZE_EVERY
+
+
+def audd_budget_left():
+    day = time.strftime('%Y-%m-%d')
+    used = kv_get('audd_calls', {})
+    n = used.get('n', 0) if used.get('day') == day else 0
+    return AUDD_DAILY_LIMIT <= 0 or n < AUDD_DAILY_LIMIT
+
+
+def audd_count():
+    day = time.strftime('%Y-%m-%d')
+    used = kv_get('audd_calls', {})
+    n = (used.get('n', 0) if used.get('day') == day else 0) + 1
+    kv_set('audd_calls', {'day': day, 'n': n})
+    return n
+
+
 def audd_recognize(sample, ctype='audio/mpeg'):
     ext = {'audio/aac': 'aac', 'audio/aacp': 'aac', 'audio/ogg': 'ogg'}.get(ctype, 'mp3')
     boundary = uuid.uuid4().hex
@@ -343,26 +418,45 @@ def recognizer():
     if DEMO or not AUDD_TOKEN:
         log('recognition off (no AUDD_TOKEN)' if not DEMO else 'recognition off (demo)')
         return
+    misses = 0
     while True:
+        wait = 60
         try:
-            if now().get('source') != 'manual':
-                res = audd_recognize(*grab_sample())
-                cur = now()
-                if res and (norm(res.get('title')) != norm(cur.get('song')) or norm(res.get('artist')) != norm(cur.get('artist'))):
+            if now().get('source') == 'manual':
+                wait = 3600  # the docent set the record; "Back to automatic" wakes this
+            elif not wanted():
+                wait = 3600  # nobody looking or listening; a visitor wakes this
+            elif not audd_budget_left():
+                log(f'recognition: daily limit of {AUDD_DAILY_LIMIT} AudD requests reached')
+                wait = 1800
+            else:
+                sampled_at = time.time()
+                sample = grab_sample()
+                res = audd_recognize(*sample)
+                n = audd_count()
+                cur, rel = now(), None
+                if res:
+                    misses = 0
                     rel = find_in_crate(res.get('artist'), res.get('title'), res.get('album'))
-                    if rel:
-                        set_now(card(rel, res['title'], 'auto'))
-                    else:
-                        art = ((res.get('apple_music') or {}).get('artwork') or {}).get('url', '')
-                        set_now({'source': 'auto', 'in_collection': False, 'song': res.get('title'),
-                                 'artist': res.get('artist'), 'album': res.get('album'),
-                                 'year': (res.get('release_date') or '')[:4] or None, 'label': res.get('label'),
-                                 'recorded_at': [], 'credits': [],
-                                 'cover': art.replace('{w}', '600').replace('{h}', '600') or None,
-                                 'updated': time.time()})
+                    if norm(res.get('title')) != norm(cur.get('song')) or norm(res.get('artist')) != norm(cur.get('artist')):
+                        if rel:
+                            set_now(card(rel, res['title'], 'auto'))
+                        else:
+                            art = ((res.get('apple_music') or {}).get('artwork') or {}).get('url', '')
+                            set_now({'source': 'auto', 'in_collection': False, 'song': res.get('title'),
+                                     'artist': res.get('artist'), 'album': res.get('album'),
+                                     'year': (res.get('release_date') or '')[:4] or None, 'label': res.get('label'),
+                                     'recorded_at': [], 'credits': [],
+                                     'cover': art.replace('{w}', '600').replace('{h}', '600') or None,
+                                     'updated': time.time()})
+                else:
+                    misses += 1
+                wait = wait_after(res, track_length(rel, (res or {}).get('title'), res), sampled_at, misses)
+                log(f'AudD request {n} today: {"match" if res else "no match"}; next check in {wait:.0f} s')
         except Exception as e:
             log('recognition:', e)
-        time.sleep(RECOGNIZE_EVERY)
+        wake.wait(wait)
+        wake.clear()
 
 
 # ---------- letters ----------
@@ -473,6 +567,16 @@ class H(BaseHTTPRequestHandler):
             return self.send(e.code, {'error': 'Icecast says ' + str(e.code)})
         except Exception:
             return self.send(502, {'error': 'Icecast is not running.'})
+        listener = path.startswith('/stream')
+        if listener:
+            note_demand(+1)
+        try:
+            self._pipe(up)
+        finally:
+            if listener:
+                note_demand(-1)
+
+    def _pipe(self, up):
         with up:
             self.send_response(200)
             for k in ('Content-Type', 'Cache-Control', 'icy-name', 'icy-description', 'icy-br', 'icy-genre'):
@@ -499,6 +603,7 @@ class H(BaseHTTPRequestHandler):
         if u.path == '/fountain-config.js':  # the website's copy sets the service address; here it's same-origin
             return self.send(200, ctype='text/javascript', raw=b'')
         if u.path == '/api/now':
+            note_demand()
             return self.send(200, now())
         if u.path == '/api/letters':
             return self.send(200, letters_for(q.get('artist'), q.get('album'), q.get('song')))
@@ -528,6 +633,7 @@ class H(BaseHTTPRequestHandler):
             if d.get('mode') == 'auto':
                 n = now() | {'source': 'auto'}
                 set_now(n)
+                wake.set()  # check right away
                 return self.send(200, n)
             rel = release(int(d.get('release_id') or 0))
             if not rel:
