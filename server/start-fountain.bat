@@ -176,6 +176,22 @@ if not errorlevel 1 goto bookup
 if not defined SERVER goto nobook
 where py >nul 2>nul
 if errorlevel 1 goto nopy
+REM Song recognition through Shazam (the shazamio library). Installed the first
+REM time only; SHAZAM=0 in fountain.env skips it. Without it the letter book still
+REM runs: AudD if AUDD_TOKEN is set, else set records on the docent page.
+if "%SHAZAM%"=="0" goto shazamdone
+py -c "import shazamio" >nul 2>nul
+if not errorlevel 1 goto shazamdone
+echo      installing Shazam song recognition, first time only (about a minute)...
+py -m pip install --user --disable-pip-version-check -q shazamio
+py -c "import shazamio" >nul 2>nul
+if errorlevel 1 goto shazamfail
+echo      OK  Shazam recognition installed
+goto shazamdone
+:shazamfail
+echo      Could not install Shazam recognition; see the messages above.
+echo      The letter book still runs. Set records on the docent page meanwhile.
+:shazamdone
 start "Letter book" /min cmd /k py fountain.py
 echo      starting...
 call :waitport %PORT% 20
@@ -224,6 +240,16 @@ set "ACTIVE="
 tasklist /fi "imagename eq ngrok.exe" | find /i "ngrok.exe" >nul
 if errorlevel 1 goto ngrokstart
 echo      already running
+REM A tunnel left from an earlier run can point at the wrong port (8000, the
+REM stream only, when the letter book was skipped). Keep it only if it forwards
+REM to %TPORT%; ngrok's local API lists where each tunnel goes.
+if defined NOCURL goto ngrokreuse
+curl -s -m 3 http://127.0.0.1:4040/api/tunnels | find "localhost:%TPORT%" >nul
+if not errorlevel 1 goto ngrokreuse
+echo      ...but it points at a different port. Restarting it.
+taskkill /im ngrok.exe /f >nul 2>nul
+goto ngrokstart
+:ngrokreuse
 if defined NOCURL set "ACTIVE=%NGROK_DOMAIN%"
 if defined NOCURL goto ngrokdone
 call :waittunnel %NGROK_DOMAIN% 3
