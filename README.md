@@ -18,7 +18,7 @@ It then:
   2. **AudD**, only if `AUDD_TOKEN` is set, and only when Shazam failed (a Shazam "no match" isn't re-asked).
   3. **The docent page**: set the song by hand, and the service follows the side, moving to the next track when each one should end (Discogs track lengths), then hands back to recognition when the side is over.
 
-  It asks as rarely as it can:
+  Shazam is checked about every 20 seconds (`SHAZAM_EVERY`) while someone is on the site or the stream, so a new record shows within about 20 seconds; if Shazam starts refusing that many requests, it rests and you can raise the setting. AudD, which costs per request, is asked as rarely as it can:
   - after a match, it waits until that song should end (the recognizer says where in the song the clip was; Discogs, or AudD's Apple Music data, give the length), then checks the next one, so about one request per song;
   - with no match (silence, between records) it backs off to 1, 2, then 4 minutes;
   - when nobody has the site open and nobody is on the stream, it makes no requests at all, and checks as soon as someone arrives;
@@ -46,6 +46,7 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 | `DISCOGS_TOKEN` | | Discogs personal access token (Settings → Developers) |
 | `DISCOGS_USER` | `andrewcrena` | |
 | `SHAZAM` | `1` | `0` turns Shazam recognition off |
+| `SHAZAM_EVERY` | `20` | Seconds between Shazam checks while someone is on the site or the stream |
 | `AUDD_TOKEN` | | AudD API token, a paid backup for when Shazam fails. Optional |
 | `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
 | `STREAM_URL` | `/stream.aac`, else `/stream.mp3` | What recognition listens to |
