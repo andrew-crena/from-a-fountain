@@ -68,6 +68,7 @@ DEMAND_WINDOW = 120  # a page asked "what's playing" this recently, so someone i
 SAMPLE_SECONDS = 13  # Shazam fingerprints a 12 s window; AudD needs ~10 s
 SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '0'))  # 0: work it out from the stream's bitrate
 USE_SHAZAM = ENV('SHAZAM', '1') != '0'
+SHAZAM_EVERY = int(ENV('SHAZAM_EVERY', '20'))  # seconds between Shazam checks while someone is there
 TRACK_GAP = 3  # seconds of run-out groove between tracks, for following a side by hand
 DOCENT_PIN = ENV('DOCENT_PIN', '')
 REQUIRE_APPROVAL = ENV('REQUIRE_APPROVAL', '1') != '0'
@@ -629,6 +630,10 @@ def recognizer():
                 else:
                     misses += 1
                 wait = wait_after(res, track_length(rel, (res or {}).get('title'), res), sampled_at, misses)
+                if via == 'shazam':
+                    # Shazam is free, so check often: a new record shows within ~SHAZAM_EVERY s.
+                    # Counted from the start of the 13 s grab, so checks really are that far apart.
+                    wait = max(2, min(wait, SHAZAM_EVERY - (time.time() - sampled_at)))
                 log(f'{via}: {"match" if res else "no match"}; next check in {wait:.0f} s')
         except Exception as e:
             log('recognition:', e)
