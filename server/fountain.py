@@ -785,8 +785,8 @@ class H(BaseHTTPRequestHandler):
                 while chunk := up.read(8192):
                     self.wfile.write(chunk)
                     self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
-                pass  # listener left
+            except ConnectionError:  # listener left (Windows reports ConnectionAbortedError)
+                pass
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
