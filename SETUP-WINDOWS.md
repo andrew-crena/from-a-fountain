@@ -68,7 +68,7 @@ The site plays `/stream.aac`. The letter book's recognition listens to `/stream.
    - on GitHub, click **Code → Download ZIP** and unzip it.
 3. In the `server` folder, copy `fountain.env.example` to **`fountain.env`** and fill it in:
    - `DISCOGS_TOKEN`: discogs.com → Settings → Developers → **Generate new token**
-   - `AUDD_TOKEN`: from your dashboard at audd.io
+   - `AUDD_TOKEN`: optional, leave it blank. Songs are recognized through Shazam, which the launcher installs the first time it runs. An AudD token (audd.io, paid) is only a backup for when Shazam fails.
    - `DISCOGS_USER`: your Discogs username (the service defaults to `andrewcrena`)
    - `DOCENT_PIN`: any PIN you'll remember for the Docent page
 
@@ -93,7 +93,7 @@ Double-click **`server\start-fountain.bat`**, or a copy of it on your Desktop: i
 
 1. **Icecast**: starts it and waits for port 8000.
 2. **BUTT**: opens it and waits until Icecast actually receives `/stream.aac`. If BUTT hasn't started streaming on its own, the launcher asks it to; if that doesn't work either, it tells you to press ▶ and waits up to two minutes.
-3. **Letter book service**: starts it and waits for port 8787. If it isn't set up on this computer (no Python or no `server` folder), the launcher skips it and sends the stream straight from Icecast; the music still reaches the site, without "now playing" or the letter book.
+3. **Letter book service**: the first time, installs Shazam song recognition (`py -m pip install shazamio`, about a minute); then starts the service and waits for port 8787. If it isn't set up on this computer (no Python or no `server` folder), the launcher skips it and sends the stream straight from Icecast; the music still reaches the site, without "now playing" or the letter book.
 4. **ngrok**: starts the tunnel on `malika-unflaky-loan.ngrok-free.dev`, or, if your ngrok sign-in can't use that address, on `cuddly-doe-adversely.ngrok-free.app`. The website tries both.
 5. **On air check**: requests the stream from the public address, the way a listener would, then opens **andrew-crena.github.io/fountain/** in your browser.
 

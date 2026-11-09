@@ -16,6 +16,12 @@ API:     GET  /api/now                    what's spinning
          POST /api/letters/<id>/approve|reject  (docent)
 
 DEMO=1 runs with a small sample crate and no outside services.
+
+Recognition: Shazam through the shazamio library if it is installed
+(pip install shazamio; the launcher does this), else AudD if AUDD_TOKEN is
+set, else none: set the record on the docent page and the service follows
+the side track by track. shazamio is optional; without it this file needs
+only the standard library.
 """
 import hmac, json, os, re, sqlite3, threading, time, unicodedata, uuid
 import urllib.error, urllib.parse, urllib.request
@@ -37,7 +43,10 @@ ICECAST_PATHS = re.compile(r'/(stream\.(aac|mp3|ogg)|status-json\.xsl)')
 RECOGNIZE_EVERY = int(ENV('RECOGNIZE_EVERY', '180'))  # fallback gap when a song's length is unknown
 AUDD_DAILY_LIMIT = int(ENV('AUDD_DAILY_LIMIT', '0'))  # 0 = no cap
 DEMAND_WINDOW = 120  # a page asked "what's playing" this recently, so someone is looking
-SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '400000'))  # ~10 s of 320 kbps MP3
+SAMPLE_SECONDS = 13  # Shazam fingerprints a 12 s window; AudD needs ~10 s
+SAMPLE_BYTES = int(ENV('SAMPLE_BYTES', '0'))  # 0: work it out from the stream's bitrate
+USE_SHAZAM = ENV('SHAZAM', '1') != '0'
+TRACK_GAP = 3  # seconds of run-out groove between tracks, for following a side by hand
 DOCENT_PIN = ENV('DOCENT_PIN', '')
 REQUIRE_APPROVAL = ENV('REQUIRE_APPROVAL', '1') != '0'
 DEMO = ENV('DEMO', '0') == '1'
@@ -340,22 +349,21 @@ def secs(s):
 
 
 def track_length(rel, title, res):
-    """Length of the playing track: your pressing on Discogs first, then Apple Music."""
+    """Length of the playing track: your pressing on Discogs first, then the recognizer's."""
     if rel:
         t = next((t for t in tracks_of(rel) if norm(t['title']) == norm(title)), None)
         d = secs((t or {}).get('duration'))
         if d:
             return d
-    ms = ((res or {}).get('apple_music') or {}).get('durationInMillis')
-    return ms / 1000 if ms else None
+    return (res or {}).get('length')
 
 
 def wait_after(res, length, sampled_at, misses):
     """Seconds until the next AudD request."""
     if not res:
         return min(240, 60 * 2 ** max(0, misses - 1))
-    pos = secs(res.get('timecode'))
-    if length and pos is not None and length > pos:
+    pos = res.get('offset')
+    if length and pos is not None and 0 <= pos < length:
         # the sample started `pos` into the song; check ~12 s into the next one
         return max(20, min(720, sampled_at + (length - pos) + 12 - time.time()))
     return RECOGNIZE_EVERY
@@ -394,30 +402,177 @@ def audd_recognize(sample, ctype='audio/mpeg'):
     return d.get('result')
 
 
+# A stream grab starts and ends partway through a frame. Shazam's decoder
+# rejects AAC that ends mid-frame ("unexpected end of file"), so keep only
+# whole frames. ADTS (AAC) and MPEG audio frame headers give each frame's length.
+_MP3_KBPS = {3: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+             2: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160]}
+_MP3_RATE = {3: (44100, 48000, 32000), 2: (22050, 24000, 16000), 0: (11025, 12000, 8000)}
+
+
+def _adts_len(b, i):
+    if b[i] != 0xFF or (b[i + 1] & 0xF6) != 0xF0:
+        return 0
+    n = ((b[i + 3] & 3) << 11) | (b[i + 4] << 3) | (b[i + 5] >> 5)
+    return n if n >= 7 else 0
+
+
+def _mp3_len(b, i):
+    if b[i] != 0xFF or (b[i + 1] & 0xE0) != 0xE0:
+        return 0
+    ver, layer = (b[i + 1] >> 3) & 3, (b[i + 1] >> 1) & 3
+    br, sr, pad = b[i + 2] >> 4, (b[i + 2] >> 2) & 3, (b[i + 2] >> 1) & 1
+    if ver == 1 or layer != 1 or br in (0, 15) or sr == 3:  # Layer III only
+        return 0
+    kbps, rate = _MP3_KBPS[3 if ver == 3 else 2][br], _MP3_RATE[ver][sr]
+    return (144000 if ver == 3 else 72000) * kbps // rate + pad
+
+
+def whole_frames(buf, ctype):
+    """The complete frames in `buf`, joined; `buf` unchanged if it isn't AAC or MP3."""
+    if 'aac' in ctype:
+        flen = _adts_len
+    elif 'mpeg' in ctype or 'mp3' in ctype:
+        flen = _mp3_len
+    else:
+        return buf
+    out, i, n = [], 0, len(buf)
+    while i + 7 <= n:
+        ln = flen(buf, i)
+        # a frame counts if it is whole and the next one starts right after it
+        # (or the buffer ends there); otherwise this was a false sync: move on a byte
+        if ln and i + ln <= n and (i + ln + 7 > n or flen(buf, i + ln)):
+            if i + ln + 7 > n and i + ln != n and out:
+                break  # the tail can't be checked; drop it rather than risk a partial frame
+            out.append(buf[i:i + ln])
+            i += ln
+        else:
+            i += 1
+    return b''.join(out) or buf
+
+
 def grab_sample():
-    """About 10 s of whichever stream is live, with its content type."""
+    """About SAMPLE_SECONDS of whichever stream is live, with its content type."""
     last = None
     for url in STREAM_URLS:
         try:
             req = urllib.request.Request(url, headers={'User-Agent': UA, 'ngrok-skip-browser-warning': '1'})
             with urllib.request.urlopen(req, timeout=20) as r:
                 ctype = (r.headers.get('Content-Type') or 'audio/mpeg').split(';')[0].strip()
+                try:
+                    kbps = int((r.headers.get('icy-br') or '').split(',')[0])
+                except ValueError:
+                    kbps = 320  # unknown: assume the highest bitrate BUTT is set to, so the clip is long enough
+                want = SAMPLE_BYTES or kbps * 125 * SAMPLE_SECONDS
                 buf = b''
-                while len(buf) < SAMPLE_BYTES:
-                    chunk = r.read(SAMPLE_BYTES - len(buf))
+                while len(buf) < want:
+                    chunk = r.read(want - len(buf))
                     if not chunk:
                         break
                     buf += chunk
-            return buf, ctype
+            return whole_frames(buf, ctype), ctype
         except urllib.error.HTTPError as e:
             last = e  # that mount isn't live; try the next
     raise last or RuntimeError('no stream')
 
 
+# ---------- recognizers ----------
+# Each returns None for "no match" or a dict: title, artist, album, label,
+# release_date, offset (seconds into the song where the clip starts), length
+# (seconds, if the service knows it), cover, via. They raise when the service
+# itself fails, so the next one can be tried.
+try:
+    from shazamio import Shazam as _Shazam  # optional: pip install shazamio
+    SHAZAM_WHY = None
+except Exception as e:  # not installed, or no build for this computer
+    _Shazam, SHAZAM_WHY = None, f'{type(e).__name__}: {e}'
+shazam_state = {'fails': 0, 'until': 0.0}
+
+
+def shazam_recognize(sample, ctype=None):
+    """Shazam, through shazamio (an unofficial client: it can break if Shazam changes)."""
+    import asyncio
+
+    async def go():
+        sh = _Shazam()
+        try:
+            return await asyncio.wait_for(sh.recognize(sample), 45)
+        finally:
+            close = getattr(sh, 'close', None)
+            if close:
+                await close()
+    d = asyncio.run(go()) or {}
+    m, t = (d.get('matches') or [None])[0], d.get('track')
+    if not (m and t and t.get('title')):
+        return None
+    meta = {x.get('title'): x.get('text') for sec in t.get('sections') or [] if sec.get('type') == 'SONG'
+            for x in sec.get('metadata') or []}
+    imgs = t.get('images') or {}
+    return {'title': t.get('title'), 'artist': t.get('subtitle'), 'album': meta.get('Album'),
+            'label': meta.get('Label'), 'release_date': meta.get('Released'),
+            'offset': m.get('offset'), 'length': None,
+            'cover': imgs.get('coverarthq') or imgs.get('coverart'), 'via': 'Shazam'}
+
+
+def audd_result(res):
+    """AudD's answer in the same shape as Shazam's."""
+    if not res:
+        return None
+    am = res.get('apple_music') or {}
+    art = (am.get('artwork') or {}).get('url', '')
+    ms = am.get('durationInMillis')
+    return {'title': res.get('title'), 'artist': res.get('artist'), 'album': res.get('album'),
+            'label': res.get('label'), 'release_date': res.get('release_date'),
+            'offset': secs(res.get('timecode')), 'length': ms / 1000 if ms else None,
+            'cover': art.replace('{w}', '600').replace('{h}', '600') or None, 'via': 'AudD'}
+
+
+def recognizers():
+    """Which recognizers can run now, in order."""
+    out = []
+    if USE_SHAZAM and _Shazam and time.time() >= shazam_state['until']:
+        out.append('shazam')
+    if AUDD_TOKEN and audd_budget_left():
+        out.append('audd')
+    return out
+
+
+def recognize(sample, ctype):
+    """Ask Shazam, then AudD if Shazam itself failed. A "no match" is an answer: AudD
+    isn't asked then, since it would almost always agree, and its requests cost."""
+    errors = []
+    for name in recognizers():
+        try:
+            if name == 'shazam':
+                res = shazam_recognize(sample, ctype)
+                shazam_state['fails'] = 0
+            else:
+                res = audd_result(audd_recognize(sample, ctype))
+                log(f'AudD request {audd_count()} today')
+            return res, name
+        except Exception as e:
+            errors.append(f'{name}: {e}')
+            if name == 'shazam':
+                shazam_state['fails'] += 1
+                if shazam_state['fails'] >= 3:  # rest it, then try again
+                    shazam_state['until'] = time.time() + 900
+                    shazam_state['fails'] = 0
+                    log('recognition: Shazam failed 3 times in a row; trying it again in 15 minutes')
+    raise RuntimeError('; '.join(errors) or 'no recognizer available')
+
+
 def recognizer():
-    if DEMO or not AUDD_TOKEN:
-        log('recognition off (no AUDD_TOKEN)' if not DEMO else 'recognition off (demo)')
+    if DEMO:
+        log('recognition off (demo)')
         return
+    if USE_SHAZAM and not _Shazam:
+        log('recognition: Shazam is not available here (' + (SHAZAM_WHY or 'shazamio not installed') +
+            '). Install it with:  py -m pip install shazamio')
+    if not ((USE_SHAZAM and _Shazam) or AUDD_TOKEN):  # set up at all, not just ready this minute
+        log('recognition off: no Shazam and no AUDD_TOKEN. Set records on the docent page;'
+            ' the service follows each side track by track.')
+        return
+    log('recognition: ' + ' then '.join({'shazam': 'Shazam', 'audd': 'AudD'}[r] for r in recognizers()))
     misses = 0
     while True:
         wait = 60
@@ -426,37 +581,79 @@ def recognizer():
                 wait = 3600  # the docent set the record; "Back to automatic" wakes this
             elif not wanted():
                 wait = 3600  # nobody looking or listening; a visitor wakes this
-            elif not audd_budget_left():
-                log(f'recognition: daily limit of {AUDD_DAILY_LIMIT} AudD requests reached')
-                wait = 1800
+            elif not recognizers():
+                wait = 900   # Shazam resting after errors, and AudD off or at its daily limit
+                if AUDD_TOKEN and not audd_budget_left():
+                    log(f'recognition: daily limit of {AUDD_DAILY_LIMIT} AudD requests reached')
             else:
                 sampled_at = time.time()
-                sample = grab_sample()
-                res = audd_recognize(*sample)
-                n = audd_count()
+                res, via = recognize(*grab_sample())
                 cur, rel = now(), None
                 if res:
                     misses = 0
                     rel = find_in_crate(res.get('artist'), res.get('title'), res.get('album'))
-                    if norm(res.get('title')) != norm(cur.get('song')) or norm(res.get('artist')) != norm(cur.get('artist')):
+                    changed = norm(res.get('title')) != norm(cur.get('song')) or norm(res.get('artist')) != norm(cur.get('artist'))
+                    # Also refresh the same song once it is found in the crate (the crate may
+                    # still have been loading at the first match), for your pressing's details.
+                    if changed or (rel and not cur.get('in_collection')):
                         if rel:
-                            set_now(card(rel, res['title'], 'auto'))
+                            set_now(card(rel, res['title'], 'auto') | {'via': res['via']})
                         else:
-                            art = ((res.get('apple_music') or {}).get('artwork') or {}).get('url', '')
-                            set_now({'source': 'auto', 'in_collection': False, 'song': res.get('title'),
-                                     'artist': res.get('artist'), 'album': res.get('album'),
+                            set_now({'source': 'auto', 'via': res['via'], 'in_collection': False,
+                                     'song': res.get('title'), 'artist': res.get('artist'), 'album': res.get('album'),
                                      'year': (res.get('release_date') or '')[:4] or None, 'label': res.get('label'),
-                                     'recorded_at': [], 'credits': [],
-                                     'cover': art.replace('{w}', '600').replace('{h}', '600') or None,
+                                     'recorded_at': [], 'credits': [], 'cover': res.get('cover'),
                                      'updated': time.time()})
                 else:
                     misses += 1
                 wait = wait_after(res, track_length(rel, (res or {}).get('title'), res), sampled_at, misses)
-                log(f'AudD request {n} today: {"match" if res else "no match"}; next check in {wait:.0f} s')
+                log(f'{via}: {"match" if res else "no match"}; next check in {wait:.0f} s')
         except Exception as e:
             log('recognition:', e)
         wake.wait(wait)
         wake.clear()
+
+
+def side_of(track):
+    return (re.match(r'[A-Za-z]+', (track or {}).get('position') or '') or [None])[0]
+
+
+def next_on_side(rel, title):
+    """The track after `title` on the same side of the record, or None at the end of the side."""
+    tr = tracks_of(rel)
+    i = next((k for k, t in enumerate(tr) if norm(t['title']) == norm(title)), None)
+    if i is None or i + 1 >= len(tr) or side_of(tr[i + 1]) != side_of(tr[i]):
+        return None
+    return tr[i + 1]
+
+
+def follow_side():
+    """Last resort when no recognizer can answer: after the docent sets a song, move to
+    the next track on that side when this one should end (Discogs track lengths). At the
+    end of the side, hand back to automatic recognition, or show nothing playing."""
+    while True:
+        time.sleep(5)
+        try:
+            n = now()
+            if n.get('source') != 'manual' or not n.get('started') or not n.get('release_id'):
+                continue
+            rel = release(n['release_id'])
+            length = track_length(rel, n.get('song'), None)
+            if not length:
+                continue  # no length on Discogs: stay on this song until the docent changes it
+            ends = n['started'] + length
+            if time.time() < ends + TRACK_GAP:
+                continue
+            nxt = next_on_side(rel, n.get('song'))
+            if nxt:
+                set_now(card(rel, nxt['title'], 'manual') | {'started': ends + TRACK_GAP})
+            elif recognizers():
+                set_now({'source': 'auto'})  # side over: recognition takes the next record
+                wake.set()
+            else:
+                set_now({'source': 'none'})
+        except Exception as e:
+            log('follow side:', e)
 
 
 # ---------- letters ----------
@@ -639,6 +836,7 @@ class H(BaseHTTPRequestHandler):
             if not rel:
                 return self.send(404, {'error': 'That record is not in the crate.'})
             n = card(rel, d.get('song') or (tracks_of(rel)[0]['title'] if tracks_of(rel) else ''), 'manual')
+            n['started'] = time.time()  # follow_side() moves through the side from here
             set_now(n)
             return self.send(200, n)
         m = re.fullmatch(r'/api/letters/([0-9a-f]{12})/(approve|reject)', u.path)
@@ -672,5 +870,6 @@ if __name__ == '__main__':
         log('warning: DOCENT_PIN not set, so the docent page is locked')
     threading.Thread(target=sync_collection, daemon=True).start()
     threading.Thread(target=recognizer, daemon=True).start()
+    threading.Thread(target=follow_side, daemon=True).start()
     log(f'listening on http://localhost:{PORT}  (approval {"on" if REQUIRE_APPROVAL else "off"})')
     ThreadingHTTPServer(('', PORT), H).serve_forever()

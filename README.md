@@ -7,16 +7,22 @@ Live vinyl stream page (`index.html`), plus a small service that shows what's sp
 One Python file, standard library only (Python 3.9+). Run it on the computer next to Icecast. **New Windows computer? Follow [SETUP-WINDOWS.md](SETUP-WINDOWS.md).**
 
 ```bash
-DISCOGS_TOKEN=...  AUDD_TOKEN=...  DOCENT_PIN=...  python3 server/fountain.py
+pip install shazamio        # optional: song recognition through Shazam
+DISCOGS_TOKEN=...  DOCENT_PIN=...  python3 server/fountain.py
 ```
 
 It then:
 
-- **Recognizes the record.** It grabs ~10 s of the stream and asks AudD what it is, as rarely as it can:
-  - after a match, it waits until that song should end (AudD says where in the song the sample was; Discogs or Apple Music give the length), then checks the next one, so about one request per song;
+- **Recognizes the record.** It grabs ~13 s of the stream and asks what it is, in this order:
+  1. **Shazam**, through [shazamio](https://github.com/shazamio/ShazamIO), if it is installed (the Windows launcher installs it). Free, and good at short clips. It is an unofficial client of Shazam's own service, not an API Shazam offers, so it is against Shazam's terms and can stop working when Shazam changes something. Then `py -m pip install -U shazamio` usually brings it back. After 3 failures in a row it rests for 15 minutes.
+  2. **AudD**, only if `AUDD_TOKEN` is set, and only when Shazam failed (a Shazam "no match" isn't re-asked).
+  3. **The docent page**: set the song by hand, and the service follows the side, moving to the next track when each one should end (Discogs track lengths), then hands back to recognition when the side is over.
+
+  It asks as rarely as it can:
+  - after a match, it waits until that song should end (the recognizer says where in the song the clip was; Discogs, or AudD's Apple Music data, give the length), then checks the next one, so about one request per song;
   - with no match (silence, between records) it backs off to 1, 2, then 4 minutes;
   - when nobody has the site open and nobody is on the stream, it makes no requests at all, and checks as soon as someone arrives;
-  - optionally, `AUDD_DAILY_LIMIT` caps requests per day.
+  - optionally, `AUDD_DAILY_LIMIT` caps AudD requests per day.
 - **Matches it to your Discogs crate** (`andrew-crena`), so the page gets the right pressing: cover, label, year, where it was recorded, and the credited players.
 - **Serves the letter book** at `/`: what's spinning, a prompt to write a memory about the song, album, or artist, and past letters, closest match first (same song → same album → same artist). People can also pick any record, playing or not.
 - **Serves the docent page** at `/docent` (needs the PIN): set the record by hand when recognition misses (this pauses recognition until you tap "Back to automatic") and approve letters before they show.
@@ -39,7 +45,8 @@ Data lives in `server/data/` (SQLite + a Discogs cache). Back it up; that's the 
 |---|---|---|
 | `DISCOGS_TOKEN` | | Discogs personal access token (Settings → Developers) |
 | `DISCOGS_USER` | `andrewcrena` | |
-| `AUDD_TOKEN` | | AudD API token. Without it, recognition is off and you set records by hand |
+| `SHAZAM` | `1` | `0` turns Shazam recognition off |
+| `AUDD_TOKEN` | | AudD API token, a paid backup for when Shazam fails. Optional |
 | `ICECAST_URL` | `http://localhost:8000` | Where Icecast runs |
 | `STREAM_URL` | `/stream.aac`, else `/stream.mp3` | What recognition listens to |
 | `RECOGNIZE_EVERY` | `180` | Seconds between checks when a song's length is unknown |
