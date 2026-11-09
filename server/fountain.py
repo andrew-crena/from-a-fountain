@@ -29,6 +29,28 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+
+
+def load_env_file(path):
+    """Read KEY=value lines from fountain.env next to this file, so settings apply however
+    the service is started. Values already set in the environment win."""
+    try:
+        lines = path.read_text(encoding='utf-8-sig').splitlines()
+    except OSError:
+        return False
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        k, v = line.split('=', 1)
+        k, v = k.strip(), v.strip()
+        if k and v and not os.environ.get(k):
+            os.environ[k] = v
+    return True
+
+
+ENV_FILE = HERE / 'fountain.env'
+ENV_LOADED = load_env_file(ENV_FILE)
 ENV = os.environ.get
 PORT = int(ENV('FOUNTAIN_PORT', '8787'))
 DATA = Path(ENV('FOUNTAIN_DATA', HERE / 'data'))
@@ -871,5 +893,6 @@ if __name__ == '__main__':
     threading.Thread(target=sync_collection, daemon=True).start()
     threading.Thread(target=recognizer, daemon=True).start()
     threading.Thread(target=follow_side, daemon=True).start()
+    log(f'settings: {ENV_FILE}' if ENV_LOADED else f'settings: no fountain.env in {HERE} (copy fountain.env.example to fountain.env and fill it in)')
     log(f'listening on http://localhost:{PORT}  (approval {"on" if REQUIRE_APPROVAL else "off"})')
     ThreadingHTTPServer(('', PORT), H).serve_forever()
