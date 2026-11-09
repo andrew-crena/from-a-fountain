@@ -637,6 +637,7 @@ def recognizer():
                 log(f'{via}: {"match" if res else "no match"}; next check in {wait:.0f} s')
         except Exception as e:
             log('recognition:', e)
+            wait = 30  # a dropped grab or a failed request: try again soon
         wake.wait(wait)
         wake.clear()
 
