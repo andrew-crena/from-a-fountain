@@ -110,6 +110,10 @@ async function unlock() {
   try { sessionStorage.setItem('pin', PIN); } catch {}
   $('#lockS').hidden = true; $('#main').hidden = false;
   loadNow(); loadPending(); setInterval(loadNow, 15000); setInterval(loadPending, 30000);
+  // Refresh as soon as the page is looked at again (phones pause timers while locked or in the background).
+  const again = () => { if (!document.hidden) loadNow(); };
+  document.addEventListener('visibilitychange', again);
+  window.addEventListener('pageshow', again);
 }
 $('#unlock').onclick = () => { PIN = $('#pin').value.trim(); unlock(); };
 $('#pin').onkeydown = e => { if (e.key === 'Enter') $('#unlock').click(); };

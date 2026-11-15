@@ -294,6 +294,10 @@ async function poll() {
 renderWrite(); renderMem();
 poll();
 setInterval(poll, 15000);
+// Refresh as soon as the page is looked at again (phones pause timers while locked or in the background).
+const again = () => { if (!document.hidden) poll(); };
+document.addEventListener('visibilitychange', again);
+window.addEventListener('pageshow', again);
 })();
 </script>
 </body>
